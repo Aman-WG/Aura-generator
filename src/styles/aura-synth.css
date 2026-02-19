@@ -1,0 +1,1483 @@
+/* ═══════════════════════════════════════════════════════════════
+   AURA SYNTHESIZER — Master Stylesheet
+   "Rick and Morty's Garage Lab" × "Supercell Loot Box"
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── CSS Variables ───────────────────────────────────────── */
+
+:root {
+  --neon-green: #00ff88;
+  --neon-blue: #00b4ff;
+  --neon-orange: #ff6600;
+  --neon-gold: #ffd700;
+  --neon-red: #ff3344;
+  --neon-purple: #b44aff;
+
+  --bg-dark: #0a0a0f;
+  --bg-panel: rgba(10, 15, 20, 0.85);
+  --bg-glass: rgba(15, 25, 35, 0.65);
+
+  --text-primary: #ffffff;
+  --text-dim: rgba(255, 255, 255, 0.45);
+  --text-bright: #ffffff;
+
+  --font-mono: 'Geist Mono', 'Courier New', monospace;
+  --font-display: 'Geist Mono', 'Courier New', monospace;
+
+  --border-glow: 0 0 10px rgba(0, 255, 136, 0.3),
+                 inset 0 0 10px rgba(0, 255, 136, 0.05);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   1. GAME VIEWPORT — Centers the 1280×720 window
+   ═══════════════════════════════════════════════════════════════ */
+
+.game-viewport {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  overflow: hidden;
+}
+
+.game-window {
+  position: relative;
+  width: 1280px;
+  height: 720px;
+  max-width: 100vw;
+  max-height: 100vh;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 255, 136, 0.15);
+  box-shadow:
+    0 0 60px rgba(0, 0, 0, 0.8),
+    0 0 30px rgba(0, 255, 136, 0.05);
+}
+
+.game-window__stage {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.game-window__console {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 20%;
+  z-index: 10;
+  padding: 0;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   2. STAGE — Background scene
+   ═══════════════════════════════════════════════════════════════ */
+
+.stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--bg-dark);
+  overflow: hidden;
+}
+
+.stage__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.stage__video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 1;
+}
+
+.stage__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.1) 0%,
+    rgba(0, 0, 0, 0.0) 30%,
+    rgba(0, 0, 0, 0.15) 70%,
+    rgba(0, 0, 0, 0.5) 100%
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   2b. ROBOT ARM — Sprite-sheet animation overlay
+   ═══════════════════════════════════════════════════════════════ */
+
+.robo-arm {
+  position: absolute;
+  z-index: 10;
+  pointer-events: none;
+
+  width: 276px;
+  height: 283px;
+  bottom: calc(22% - 60px);
+
+  background-image: url('/sprites/roboarmsprites.png');
+  background-size: 600% 600%;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+}
+
+.robo-arm--left {
+  left: 40px;
+}
+
+.robo-arm--right {
+  right: 40px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   2b-2. ARM MOUNTS — Sci-fi docking rails the claws extend from
+   ═══════════════════════════════════════════════════════════════ */
+
+.arm-mount {
+  position: absolute;
+  z-index: 9;
+  pointer-events: none;
+  bottom: 0;
+  width: 60px;
+  height: calc(78% + 10px);
+
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(30, 35, 45, 0.6) 15%,
+    rgba(40, 45, 55, 0.85) 30%,
+    rgba(50, 55, 65, 0.9) 100%
+  );
+  border: 1px solid rgba(100, 120, 140, 0.25);
+}
+
+.arm-mount::before {
+  content: '';
+  position: absolute;
+  top: 18%;
+  width: 100%;
+  height: 64%;
+  background:
+    repeating-linear-gradient(
+      180deg,
+      transparent,
+      transparent 18px,
+      rgba(80, 100, 120, 0.2) 18px,
+      rgba(80, 100, 120, 0.2) 19px
+    );
+}
+
+.arm-mount::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(0, 200, 255, 0.5);
+  box-shadow:
+    0 0 6px rgba(0, 200, 255, 0.4),
+    0 0 16px rgba(0, 200, 255, 0.15),
+    0 40px 0 rgba(0, 200, 255, 0.3),
+    0 40px 6px rgba(0, 200, 255, 0.2),
+    0 -40px 0 rgba(0, 200, 255, 0.3),
+    0 -40px 6px rgba(0, 200, 255, 0.2),
+    0 80px 0 rgba(0, 200, 255, 0.2),
+    0 80px 6px rgba(0, 200, 255, 0.1),
+    0 -80px 0 rgba(0, 200, 255, 0.2),
+    0 -80px 6px rgba(0, 200, 255, 0.1);
+}
+
+.arm-mount--left {
+  left: 0;
+  border-right: 1px solid rgba(0, 200, 255, 0.15);
+  border-left: none;
+  box-shadow: inset -8px 0 20px rgba(0, 0, 0, 0.4);
+}
+
+.arm-mount--right {
+  right: 0;
+  border-left: 1px solid rgba(0, 200, 255, 0.15);
+  border-right: none;
+  box-shadow: inset 8px 0 20px rgba(0, 0, 0, 0.4);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   2c. SCANNER SCREEN — Green holographic scan overlay
+   ═══════════════════════════════════════════════════════════════ */
+
+.scanner-screen {
+  position: absolute;
+  z-index: 12;
+  pointer-events: none;
+
+  /* 332.8:414 source aspect ratio preserved */
+  width: 280px;
+  height: 348px;
+
+  /* Center horizontally, sit above the console */
+  left: 50%;
+  margin-left: -140px;
+  bottom: calc(22% + 20px);
+
+  /* 5 cols x 6 rows grid */
+  background-image: url('/sprites/greenscreen.png');
+  background-size: 500% 600%;
+  background-repeat: no-repeat;
+  image-rendering: auto;
+
+  /* Green luminous glow */
+  filter: drop-shadow(0 0 12px rgba(0, 255, 60, 0.6))
+          drop-shadow(0 0 30px rgba(0, 255, 60, 0.3))
+          drop-shadow(0 0 60px rgba(0, 200, 40, 0.15));
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   3. SCANLINES & CRT EFFECTS
+   ═══════════════════════════════════════════════════════════════ */
+
+.scanlines {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.08) 2px,
+    rgba(0, 0, 0, 0.08) 4px
+  );
+  animation: scanline-roll 8s linear infinite;
+}
+
+@keyframes scanline-roll {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 100px; }
+}
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 49;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 50%,
+    rgba(0, 0, 0, 0.6) 100%
+  );
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   4. QBIT CONTAINER — Character pod
+   ═══════════════════════════════════════════════════════════════ */
+
+.qbit-container {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 255, 136, 0.3);
+  background: radial-gradient(
+    circle at center,
+    rgba(0, 255, 136, 0.05) 0%,
+    transparent 70%
+  );
+}
+
+.qbit-sprite-slot {
+  position: relative;
+  z-index: 2;
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qbit-sprite-slot img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 20px rgba(0, 255, 136, 0.4));
+}
+
+.qbit-placeholder {
+  width: 100%;
+  height: 100%;
+  border: 2px dashed var(--neon-green);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--neon-green);
+  transition: border-color 0.5s, color 0.5s;
+}
+
+.qbit-placeholder__face {
+  display: flex;
+  gap: 16px;
+  font-size: 24px;
+}
+
+.qbit-eye {
+  animation: eye-blink 3s ease-in-out infinite;
+}
+
+.qbit-eye:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+@keyframes eye-blink {
+  0%, 90%, 100% { opacity: 1; transform: scaleY(1); }
+  95% { opacity: 0.8; transform: scaleY(0.1); }
+}
+
+.qbit-placeholder__label {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  opacity: 0.7;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   5. AURA LAYER — Glow effect behind character
+   ═══════════════════════════════════════════════════════════════ */
+
+.aura-layer {
+  position: absolute;
+  inset: -40px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.default-aura-glow {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.aura-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid;
+  animation: aura-spin 6s linear infinite;
+}
+
+.aura-ring--outer {
+  width: 100%;
+  height: 100%;
+  border-color: rgba(255, 215, 0, 0.3);
+  animation-duration: 8s;
+}
+
+.aura-ring--mid {
+  width: 75%;
+  height: 75%;
+  border-color: rgba(255, 100, 0, 0.4);
+  animation-duration: 5s;
+  animation-direction: reverse;
+}
+
+.aura-ring--inner {
+  width: 50%;
+  height: 50%;
+  border-color: rgba(255, 50, 50, 0.5);
+  animation-duration: 3s;
+}
+
+.aura-core-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--neon-gold);
+  box-shadow:
+    0 0 20px var(--neon-gold),
+    0 0 40px rgba(255, 215, 0, 0.5),
+    0 0 80px rgba(255, 215, 0, 0.3);
+  animation: core-pulse 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes aura-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes core-pulse {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(1.3); opacity: 1; }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   6. CONSOLE — RPG Dialogue Panel
+   ═══════════════════════════════════════════════════════════════ */
+
+.console {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    180deg,
+    rgba(20, 15, 40, 0.65) 0%,
+    rgba(15, 12, 35, 0.85) 50%,
+    rgba(12, 10, 30, 0.95) 100%
+  );
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  border: none;
+  border-radius: 0;
+  overflow: hidden;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.console__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 10px 28px 12px;
+  overflow: hidden;
+  position: relative;
+  z-index: 2;
+}
+
+.console__body--row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   7. DIALOGUE BOX — Typewriter text
+   ═══════════════════════════════════════════════════════════════ */
+
+.dialogue-box {
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.dialogue-box__scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dialogue-line {
+  font-family: var(--font-mono);
+  font-size: 15.5px;
+  line-height: 1.5;
+  color: #00ff41;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.dialogue-line__text {
+  text-shadow:
+    0 0 6px rgba(0, 255, 65, 0.6),
+    0 0 20px rgba(0, 255, 65, 0.2),
+    0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.dialogue-cursor {
+  color: rgba(0, 255, 65, 0.7);
+  font-weight: normal;
+  margin-left: 1px;
+}
+
+.dialogue-cursor--idle {
+  color: rgba(0, 255, 65, 0.35);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   8. INTERACTION AREA — Buttons / Controls
+   ═══════════════════════════════════════════════════════════════ */
+
+.interaction-area {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 4px;
+}
+
+.interaction-area__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.interaction-hint {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: rgba(0, 255, 65, 0.4);
+  text-shadow: 0 0 4px rgba(0, 255, 65, 0.15);
+  text-align: center;
+  letter-spacing: 0.3px;
+}
+
+.interaction-placeholder {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: rgba(0, 255, 65, 0.4);
+  text-shadow: 0 0 4px rgba(0, 255, 65, 0.15);
+  text-align: center;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   9. GLITCH BUTTON — The "Juicy" CTA
+   ═══════════════════════════════════════════════════════════════ */
+
+.glitch-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 32px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  overflow: hidden;
+  transition: box-shadow 0.3s;
+}
+
+.glitch-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.glitch-btn--primary {
+  background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+  color: #0a0a0f;
+  box-shadow:
+    0 0 20px rgba(0, 255, 136, 0.4),
+    0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.glitch-btn--primary:hover:not(:disabled) {
+  box-shadow:
+    0 0 30px rgba(0, 255, 136, 0.6),
+    0 0 60px rgba(0, 255, 136, 0.2),
+    0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.glitch-btn--secondary {
+  background: linear-gradient(135deg, #00b4ff 0%, #0088cc 100%);
+  color: #0a0a0f;
+  box-shadow:
+    0 0 20px rgba(0, 180, 255, 0.4),
+    0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.glitch-btn--danger {
+  background: linear-gradient(135deg, #ff3344 0%, #cc2233 100%);
+  color: #fff;
+  box-shadow:
+    0 0 20px rgba(255, 50, 68, 0.4),
+    0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.glitch-btn__text {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+}
+
+.glitch-btn__glare {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.15) 50%,
+    transparent 60%
+  );
+  animation: btn-glare 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes btn-glare {
+  0%, 100% { transform: translateX(-100%); }
+  50% { transform: translateX(100%); }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   10. PIXEL BUTTON — Neo retro sci-fi neon yellow CTA
+   ═══════════════════════════════════════════════════════════════ */
+
+.pixel-btn {
+  position: relative;
+  display: inline-block;
+  padding: 12px 36px;
+  background: #ffe430;
+  color: #0a0a0f;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  border: none;
+  cursor: pointer;
+
+  /* Pixel art stepped border via box-shadow stacking */
+  box-shadow:
+    /* Outer pixel border */
+    -4px 0 0 0 #b89f00,
+    4px 0 0 0 #b89f00,
+    0 -4px 0 0 #b89f00,
+    0 4px 0 0 #b89f00,
+    /* Neon glow */
+    0 0 16px rgba(255, 228, 48, 0.6),
+    0 0 40px rgba(255, 228, 48, 0.25),
+    0 0 80px rgba(255, 228, 48, 0.1);
+
+  /* No rounded corners — pixel aesthetic */
+  border-radius: 0;
+
+  animation: pixel-btn-pulse 2s ease-in-out infinite;
+  transition: background 0.15s;
+}
+
+.pixel-btn:hover {
+  background: #fff06a;
+  box-shadow:
+    -4px 0 0 0 #ccb300,
+    4px 0 0 0 #ccb300,
+    0 -4px 0 0 #ccb300,
+    0 4px 0 0 #ccb300,
+    0 0 24px rgba(255, 228, 48, 0.8),
+    0 0 60px rgba(255, 228, 48, 0.35),
+    0 0 100px rgba(255, 228, 48, 0.15);
+}
+
+.pixel-btn:active {
+  background: #e6cc00;
+}
+
+@keyframes pixel-btn-pulse {
+  0%, 100% {
+    box-shadow:
+      -4px 0 0 0 #b89f00,
+      4px 0 0 0 #b89f00,
+      0 -4px 0 0 #b89f00,
+      0 4px 0 0 #b89f00,
+      0 0 16px rgba(255, 228, 48, 0.6),
+      0 0 40px rgba(255, 228, 48, 0.25),
+      0 0 80px rgba(255, 228, 48, 0.1);
+  }
+  50% {
+    box-shadow:
+      -4px 0 0 0 #ccb300,
+      4px 0 0 0 #ccb300,
+      0 -4px 0 0 #ccb300,
+      0 4px 0 0 #ccb300,
+      0 0 24px rgba(255, 228, 48, 0.8),
+      0 0 56px rgba(255, 228, 48, 0.4),
+      0 0 100px rgba(255, 228, 48, 0.15);
+  }
+}
+
+
+/* Small variant for inline use */
+.pixel-btn--sm {
+  padding: 9px 20px;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  flex-shrink: 0;
+  box-shadow:
+    -3px 0 0 0 #b89f00,
+    3px 0 0 0 #b89f00,
+    0 -3px 0 0 #b89f00,
+    0 3px 0 0 #b89f00,
+    0 0 12px rgba(255, 228, 48, 0.5),
+    0 0 30px rgba(255, 228, 48, 0.2);
+}
+
+.pixel-btn--sm:hover {
+  box-shadow:
+    -3px 0 0 0 #ccb300,
+    3px 0 0 0 #ccb300,
+    0 -3px 0 0 #ccb300,
+    0 3px 0 0 #ccb300,
+    0 0 18px rgba(255, 228, 48, 0.7),
+    0 0 40px rgba(255, 228, 48, 0.3);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   11. CONFIGURATION UI — Slot pill selector
+   ═══════════════════════════════════════════════════════════════ */
+
+.config-ui {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+}
+
+.config-ui__step-label {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: rgba(0, 255, 65, 0.7);
+  text-shadow: 0 0 4px rgba(0, 255, 65, 0.2);
+  letter-spacing: 0.3px;
+}
+
+.config-ui__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1px solid rgba(0, 255, 65, 0.2);
+  border-radius: 20px;
+  background: rgba(0, 255, 65, 0.05);
+  color: #00ff41;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-shadow: 0 0 4px rgba(0, 255, 65, 0.3);
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.pill-btn:hover {
+  background: rgba(0, 255, 65, 0.12);
+  border-color: rgba(0, 255, 65, 0.4);
+  box-shadow: 0 0 10px rgba(0, 255, 65, 0.15);
+}
+
+.pill-btn--active {
+  background: rgba(180, 74, 255, 0.25);
+  border-color: rgba(180, 74, 255, 0.6);
+  box-shadow: 0 0 12px rgba(180, 74, 255, 0.3);
+  color: #ffffff;
+}
+
+.pill-btn__emoji {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.pill-btn__label {
+  line-height: 1;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   11. CHAOS INPUT — shared input style
+   ═══════════════════════════════════════════════════════════════ */
+
+.chaos-ui__input {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 14px;
+  border: 1px solid rgba(0, 255, 65, 0.2);
+  border-radius: 6px;
+  background: rgba(0, 255, 65, 0.04);
+  color: #00ff41;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  outline: none;
+  text-shadow: 0 0 4px rgba(0, 255, 65, 0.3);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.chaos-ui__input::placeholder {
+  color: rgba(0, 255, 65, 0.25);
+  font-style: italic;
+}
+
+.chaos-ui__input:focus {
+  border-color: rgba(0, 255, 65, 0.5);
+  box-shadow: 0 0 16px rgba(0, 255, 65, 0.12);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   12. INTERACTION AREA — layout helpers
+   ═══════════════════════════════════════════════════════════════ */
+
+.interaction-area__content--row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.interaction-area__content--center {
+  align-items: center;
+  justify-content: center;
+}
+
+.interaction-area__label {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: rgba(0, 255, 65, 0.55);
+  text-shadow: 0 0 4px rgba(0, 255, 65, 0.15);
+  line-height: 1.4;
+  flex: 1;
+  min-width: 0;
+}
+
+.pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   12b. CHAOS INPUT UI — text field + generate button
+   ═══════════════════════════════════════════════════════════════ */
+
+.chaos-ui {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.chaos-ui__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.chaos-ui__input-wrap {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
+
+.chaos-ui__input-wrap .chaos-ui__input {
+  width: 100%;
+  padding-right: 60px;
+}
+
+.chaos-ui__wc {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: rgba(0, 255, 65, 0.3);
+  pointer-events: none;
+}
+
+.chaos-ui__wc--over {
+  color: var(--neon-red);
+}
+
+.chaos-ui__hint {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: rgba(0, 255, 65, 0.3);
+  text-shadow: 0 0 4px rgba(0, 255, 65, 0.1);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   13. PROCESSING BAR
+   ═══════════════════════════════════════════════════════════════ */
+
+.processing-bar {
+  height: 4px;
+  background: linear-gradient(
+    90deg,
+    #00cc33,
+    #00ff41,
+    #33ff77
+  );
+  border-radius: 2px;
+  box-shadow:
+    0 0 10px rgba(0, 255, 65, 0.6),
+    0 0 30px rgba(0, 255, 65, 0.25);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   13b. STAGE FLICKER — Light fluctuation overlay during processing
+   ═══════════════════════════════════════════════════════════════ */
+
+.stage__flicker {
+  position: absolute;
+  inset: 0;
+  z-index: 45;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at 50% 40%,
+    rgba(255, 255, 255, 0.35) 0%,
+    rgba(200, 180, 255, 0.15) 40%,
+    transparent 80%
+  );
+  mix-blend-mode: overlay;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   13c. REVEAL UNLOCK — Brawl-Stars-style character showcase
+   ═══════════════════════════════════════════════════════════════ */
+
+.reveal-unlock {
+  position: absolute;
+  inset: 0;
+  z-index: 55;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Dark cinematic dim */
+.reveal-unlock__dim {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at 50% 45%,
+    rgba(0, 0, 0, 0.55) 0%,
+    rgba(0, 0, 0, 0.88) 60%,
+    rgba(0, 0, 0, 0.94) 100%
+  );
+}
+
+/* Center stage container */
+.reveal-unlock__center {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  transform: translate(-50%, -55%);
+  width: 420px;
+  height: 420px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Rotating light rays */
+.reveal-unlock__rays {
+  position: absolute;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(180, 74, 255, 0.15) 10deg,
+    transparent 20deg,
+    transparent 30deg,
+    rgba(255, 215, 0, 0.12) 40deg,
+    transparent 50deg,
+    transparent 60deg,
+    rgba(0, 255, 136, 0.1) 70deg,
+    transparent 80deg,
+    transparent 90deg,
+    rgba(180, 74, 255, 0.15) 100deg,
+    transparent 110deg,
+    transparent 120deg,
+    rgba(255, 215, 0, 0.12) 130deg,
+    transparent 140deg,
+    transparent 150deg,
+    rgba(0, 255, 136, 0.1) 160deg,
+    transparent 170deg,
+    transparent 180deg,
+    rgba(180, 74, 255, 0.15) 190deg,
+    transparent 200deg,
+    transparent 210deg,
+    rgba(255, 215, 0, 0.12) 220deg,
+    transparent 230deg,
+    transparent 240deg,
+    rgba(0, 255, 136, 0.1) 250deg,
+    transparent 260deg,
+    transparent 270deg,
+    rgba(180, 74, 255, 0.15) 280deg,
+    transparent 290deg,
+    transparent 300deg,
+    rgba(255, 215, 0, 0.12) 310deg,
+    transparent 320deg,
+    transparent 330deg,
+    rgba(0, 255, 136, 0.1) 340deg,
+    transparent 350deg,
+    transparent 360deg
+  );
+  mask-image: radial-gradient(circle, black 10%, transparent 70%);
+  -webkit-mask-image: radial-gradient(circle, black 10%, transparent 70%);
+}
+
+.reveal-unlock__rays--alt {
+  opacity: 0.5;
+  filter: blur(2px);
+}
+
+/* Radial glow burst behind character */
+.reveal-unlock__glow {
+  position: absolute;
+  width: 110%;
+  height: 110%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(180, 74, 255, 0.4) 0%,
+    rgba(180, 74, 255, 0.15) 35%,
+    rgba(0, 255, 136, 0.08) 55%,
+    transparent 75%
+  );
+  filter: blur(8px);
+}
+
+/* Pulsing ring around character */
+.reveal-unlock__pulse-ring {
+  position: absolute;
+  width: 78%;
+  height: 78%;
+  border-radius: 50%;
+  border: 2px solid rgba(180, 74, 255, 0.35);
+  box-shadow:
+    0 0 30px rgba(180, 74, 255, 0.25),
+    inset 0 0 30px rgba(180, 74, 255, 0.08);
+}
+
+/* Character container */
+.reveal-unlock__character {
+  position: relative;
+  z-index: 3;
+  width: 260px;
+  height: 340px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter:
+    drop-shadow(0 0 24px rgba(180, 74, 255, 0.5))
+    drop-shadow(0 0 60px rgba(180, 74, 255, 0.25))
+    drop-shadow(0 8px 20px rgba(0, 0, 0, 0.6));
+}
+
+.reveal-unlock__img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+}
+
+/* Sparkle particles */
+.reveal-unlock__particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.reveal-unlock__sparkle {
+  position: absolute;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow:
+    0 0 6px 2px rgba(255, 255, 255, 0.8),
+    0 0 14px 4px rgba(180, 74, 255, 0.5);
+}
+
+/* Footer — title + CTA buttons */
+.reveal-unlock__footer {
+  position: absolute;
+  bottom: 8%;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  text-align: center;
+  pointer-events: auto;
+}
+
+.reveal-unlock__line1 {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 24px;
+  font-weight: 400;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #ffffff;
+  text-shadow:
+    0 0 20px rgba(180, 74, 255, 0.8),
+    0 0 60px rgba(180, 74, 255, 0.4),
+    0 0 120px rgba(180, 74, 255, 0.2),
+    0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+.reveal-unlock__actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Ghost / secondary pixel button for Retry */
+.pixel-btn--ghost {
+  background: transparent;
+  color: #ffe430;
+  border: 2px solid rgba(255, 228, 48, 0.5);
+  box-shadow:
+    0 0 12px rgba(255, 228, 48, 0.15),
+    0 0 30px rgba(255, 228, 48, 0.06);
+  animation: none;
+}
+
+.pixel-btn--ghost:hover {
+  background: rgba(255, 228, 48, 0.1);
+  border-color: rgba(255, 228, 48, 0.8);
+  box-shadow:
+    0 0 18px rgba(255, 228, 48, 0.3),
+    0 0 40px rgba(255, 228, 48, 0.12);
+}
+
+.pixel-btn--ghost:active {
+  background: rgba(255, 228, 48, 0.18);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   14. PHASE INDICATOR (Dev helper)
+   ═══════════════════════════════════════════════════════════════ */
+
+.phase-indicator {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  z-index: 100;
+  display: flex;
+  gap: 8px;
+}
+
+.phase-dot {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.2);
+  letter-spacing: 1px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s;
+}
+
+.phase-dot--active {
+  color: var(--neon-green);
+  border-color: var(--neon-green);
+  background: rgba(0, 255, 136, 0.1);
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   15. RESPONSIVE SCALING — Fit to any screen
+   ═══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 1300px) {
+  .game-window {
+    width: 100vw;
+    height: auto;
+    border-radius: 0;
+  }
+}
+
+@media (max-height: 740px) {
+  .game-window {
+    height: 100vh;
+    width: auto;
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   16. AMBIENT GLOW — Subtle environmental light
+   ═══════════════════════════════════════════════════════════════ */
+
+.game-window::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  z-index: -1;
+  border-radius: 10px;
+  background: conic-gradient(
+    from 0deg,
+    rgba(0, 255, 136, 0.1),
+    rgba(0, 180, 255, 0.1),
+    rgba(180, 74, 255, 0.1),
+    rgba(255, 215, 0, 0.1),
+    rgba(0, 255, 136, 0.1)
+  );
+  animation: ambient-rotate 10s linear infinite;
+  filter: blur(8px);
+}
+
+@keyframes ambient-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   17. INTRO SPLASH — Dramatic retro title card
+   ═══════════════════════════════════════════════════════════════ */
+
+.intro-splash {
+  position: absolute;
+  inset: 0;
+  z-index: 200;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* CRT scanlines over intro */
+.intro-splash__scanlines {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255, 255, 255, 0.02) 2px,
+    rgba(255, 255, 255, 0.02) 4px
+  );
+}
+
+/* Horizontal light sweep */
+.intro-splash__sweep {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 8;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(180, 74, 255, 0.2) 15%,
+    rgba(0, 200, 255, 0.7) 40%,
+    rgba(255, 255, 255, 0.9) 50%,
+    rgba(255, 110, 199, 0.7) 60%,
+    rgba(255, 215, 0, 0.2) 85%,
+    transparent 100%
+  );
+  box-shadow:
+    0 0 30px 8px rgba(180, 74, 255, 0.3),
+    0 0 80px 20px rgba(0, 200, 255, 0.15);
+}
+
+/* Center content wrapper */
+.intro-splash__center {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+/* "Welcome to" small text */
+.intro-splash__welcome {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+  text-shadow:
+    0 0 8px rgba(180, 74, 255, 0.4),
+    0 0 20px rgba(0, 200, 255, 0.2);
+}
+
+/* Title wrapper (holds main + glitch layers) */
+.intro-splash__title-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* "AURA LAB" main title */
+.intro-splash__title {
+  position: relative;
+}
+
+.intro-splash__title-main {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 72px;
+  font-weight: 400;
+  letter-spacing: 8px;
+  text-transform: uppercase;
+  background: linear-gradient(
+    90deg,
+    #ff6ec7, #b44aff, #00b4ff, #00ffaa, #ffd700, #ff6ec7
+  );
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation:
+    intro-iridescent 3s ease-in-out infinite,
+    intro-glow-pulse 2s ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 12px rgba(180, 74, 255, 0.6))
+          drop-shadow(0 0 40px rgba(0, 180, 255, 0.3))
+          drop-shadow(0 0 80px rgba(255, 110, 199, 0.2));
+}
+
+@keyframes intro-iridescent {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes intro-glow-pulse {
+  0% {
+    filter: drop-shadow(0 0 12px rgba(180, 74, 255, 0.6))
+            drop-shadow(0 0 40px rgba(0, 180, 255, 0.3))
+            drop-shadow(0 0 80px rgba(255, 110, 199, 0.2));
+  }
+  100% {
+    filter: drop-shadow(0 0 18px rgba(180, 74, 255, 0.8))
+            drop-shadow(0 0 55px rgba(0, 180, 255, 0.45))
+            drop-shadow(0 0 110px rgba(255, 110, 199, 0.3));
+  }
+}
+
+/* Glitch layers — red/blue chromatic aberration */
+.intro-splash__glitch {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 72px;
+  font-weight: 400;
+  letter-spacing: 8px;
+  text-transform: uppercase;
+  text-align: center;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+.intro-splash__glitch--r {
+  color: rgba(255, 110, 199, 0.7);
+  text-shadow: 0 0 20px rgba(255, 110, 199, 0.5);
+  transform: translate(3px, -2px);
+  clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+}
+
+.intro-splash__glitch--b {
+  color: rgba(0, 200, 255, 0.6);
+  text-shadow: 0 0 20px rgba(0, 200, 255, 0.5);
+  transform: translate(-3px, 2px);
+  clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
+}
+
+/* Tagline / version text */
+.intro-splash__sub {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 3px;
+  color: rgba(255, 255, 255, 0.3);
+  text-shadow: 0 0 6px rgba(180, 74, 255, 0.2);
+  margin-top: 8px;
+}
+
+/* Tech frame corners */
+.intro-splash__corner {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  z-index: 6;
+  border-color: rgba(255, 255, 255, 0.15);
+  border-style: solid;
+  border-width: 0;
+}
+
+.intro-splash__corner--tl {
+  top: 24px;
+  left: 24px;
+  border-top-width: 2px;
+  border-left-width: 2px;
+}
+
+.intro-splash__corner--tr {
+  top: 24px;
+  right: 24px;
+  border-top-width: 2px;
+  border-right-width: 2px;
+}
+
+.intro-splash__corner--bl {
+  bottom: 24px;
+  left: 24px;
+  border-bottom-width: 2px;
+  border-left-width: 2px;
+}
+
+.intro-splash__corner--br {
+  bottom: 24px;
+  right: 24px;
+  border-bottom-width: 2px;
+  border-right-width: 2px;
+}
