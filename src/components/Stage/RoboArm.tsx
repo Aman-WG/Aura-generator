@@ -9,7 +9,7 @@ const FRAME_DURATION_MS = 60;
 const DISPLAY_W = 276;
 const DISPLAY_H = 283;
 
-const TRAVEL_X = 68;
+const RETRACT_X = 210;
 
 interface RoboArmProps {
   side: 'left' | 'right';
@@ -77,13 +77,13 @@ export function RoboArm({ side, entered, fireTrigger, isLooping = false }: RoboA
   const bgY = -(row * DISPLAY_H);
 
   const mirror = side === 'right' ? -1 : 1;
-  const targetX = side === 'left' ? TRAVEL_X : -TRAVEL_X;
+  const retractedX = side === 'left' ? -RETRACT_X : RETRACT_X;
 
   return (
     <motion.div
       className={`robo-arm robo-arm--${side}`}
-      initial={{ x: 0, scaleX: mirror }}
-      animate={{ x: entered ? targetX : 0, scaleX: mirror }}
+      initial={{ x: retractedX, scaleX: mirror }}
+      animate={{ x: entered ? 0 : retractedX, scaleX: mirror }}
       transition={{
         type: 'spring',
         stiffness: 60,

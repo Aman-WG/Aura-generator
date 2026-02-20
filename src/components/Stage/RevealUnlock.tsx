@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 interface RevealUnlockProps {
   onEquip: () => void;
   onRetry: () => void;
+  avatarImageUrl?: string;
 }
 
 const SPARKLE_COUNT = 14;
@@ -15,7 +16,7 @@ const sparkles = Array.from({ length: SPARKLE_COUNT }, (_, i) => {
   return { angle, radius, size, delay, id: i };
 });
 
-export function RevealUnlock({ onEquip, onRetry }: RevealUnlockProps) {
+export function RevealUnlock({ onEquip, onRetry, avatarImageUrl }: RevealUnlockProps) {
   return (
     <motion.div
       className="reveal-unlock"
@@ -94,7 +95,7 @@ export function RevealUnlock({ onEquip, onRetry }: RevealUnlockProps) {
           }}
         >
           <motion.img
-            src="/sprites/qbit-reveal.png"
+            src={avatarImageUrl || '/sprites/qbit-reveal.png'}
             alt="Qbit with Aura"
             className="reveal-unlock__img"
             draggable={false}

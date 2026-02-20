@@ -6,6 +6,7 @@ import { IntroSplash } from './IntroSplash';
 import { useTypewriter } from '../hooks/useTypewriter';
 import { useSound } from '../hooks/useSound';
 import { useSynthesizer } from '../hooks/useSynthesizer';
+import { useBridge } from '../context/ParentBridgeContext';
 import { PHASE } from '../constants/phases';
 import { DIALOGUE } from '../constants/dialogue';
 
@@ -23,6 +24,7 @@ const RETRACT_DURATION = 1500;
 export function Layout() {
   const synth = useSynthesizer();
   const { play } = useSound();
+  const bridge = useBridge();
 
   const [showIntro, setShowIntro] = useState(true);
   const [showConsole, setShowConsole] = useState(false);
@@ -40,6 +42,11 @@ export function Layout() {
     const t2 = setTimeout(() => setStartTyping(true), CONSOLE_ENTRANCE_DELAY + TYPEWRITER_START_DELAY);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, []);
+
+  // Notify parent of every phase transition
+  useEffect(() => {
+    bridge.sendPhaseChange(synth.phase);
+  }, [synth.phase, bridge]);
 
   // Re-trigger typewriter on phase change
   useEffect(() => {
@@ -123,16 +130,18 @@ export function Layout() {
 
   const handleEquipAura = useCallback(() => {
     play('click');
-  }, [play]);
+    bridge.sendEquipped(synth.auraConfig);
+  }, [play, bridge, synth.auraConfig]);
 
   const handleRetry = useCallback(() => {
     play('click');
+    bridge.sendRetry();
     setAttemptCount((n) => n + 1);
     synth.reset();
     setScannerVisible(false);
     setArmsEntered(false);
     setIsGenerating(false);
-  }, [play, synth]);
+  }, [play, synth, bridge]);
 
   const consoleHeight =
     synth.phase === PHASE.CHAOS_INPUT ? '24%'
@@ -159,6 +168,7 @@ export function Layout() {
             isGenerating={isGenerating}
             onEquipAura={handleEquipAura}
             onRetry={handleRetry}
+            avatarImageUrl={bridge.avatarData?.avatarImageUrl}
           />
         </div>
 

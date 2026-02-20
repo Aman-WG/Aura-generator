@@ -16,6 +16,7 @@ interface StageProps {
   isGenerating: boolean;
   onEquipAura: () => void;
   onRetry: () => void;
+  avatarImageUrl?: string;
 }
 
 const shakeKeyframes = {
@@ -24,7 +25,7 @@ const shakeKeyframes = {
   rotate: [0, -0.6, 0.6, -0.4, 0.3, -0.1, 0],
 };
 
-export function Stage({ phase, isShaking, scannerVisible, scannerFireTrigger, armsEntered, armFireTrigger, isGenerating, onEquipAura, onRetry }: StageProps) {
+export function Stage({ phase, isShaking, scannerVisible, scannerFireTrigger, armsEntered, armFireTrigger, isGenerating, onEquipAura, onRetry, avatarImageUrl }: StageProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -89,7 +90,7 @@ export function Stage({ phase, isShaking, scannerVisible, scannerFireTrigger, ar
       </AnimatePresence>
 
       <AnimatePresence>
-        {phase === PHASE.REVEAL && <RevealUnlock onEquip={onEquipAura} onRetry={onRetry} />}
+        {phase === PHASE.REVEAL && <RevealUnlock onEquip={onEquipAura} onRetry={onRetry} avatarImageUrl={avatarImageUrl} />}
       </AnimatePresence>
     </motion.div>
   );
