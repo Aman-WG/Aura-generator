@@ -1,4 +1,4 @@
-import type { AuraParams, ParticleStyle, ParticleDrift } from './types';
+import type { AuraParams, ParticleStyle, ParticleDrift, EnergyFlowPattern } from './types';
 import { VALID_SHAPE_IDS } from './particle-shapes';
 
 // ─────────────────────────────────────────────────────────────
@@ -75,6 +75,20 @@ Particle drift and style should match mood:
 
 DO NOT default to aggressive sharp angles. Most prompts deserve a balanced or flowing contour.
 
+ENERGY FLOW (how color/light moves THROUGH the aura):
+This controls the animated movement of the glow inside the aura body. Choose a pattern that matches how the prompt's energy would naturally move:
+- "radial-out": Energy expands outward from the character's core. Use for power bursts, explosions, energy releases, activation moments.
+- "radial-in": Energy pulls inward toward the character. Use for absorption, concentration, void, black holes, meditation, charging up.
+- "rise": Energy sweeps upward from feet to head repeatedly. Use for fire, ascending power, heroic auras, levitation, heat.
+- "spiral": Energy rotates around the character. Use for magic, vortex, cosmic, cyclones, mystical, tornado, spiritual.
+- "pulse": Rhythmic breathing waves expand and contract. Use for heartbeat, calm power, steady energy, life force, music, rhythm.
+- "cascade": Energy flows downward like a waterfall. Use for water, rain, gravity, melancholy, descending, ice, cooling.
+
+Speed (0.3-2.0): How fast the flow animates. Match to the aura's overall energy.
+Intensity (0.3-1.0): How visible/prominent the flow effect is. Subtle for gentle prompts, strong for dramatic ones.
+
+Think about the prompt's PHYSICS — how would this energy actually move? Fire rises. Water cascades. Magic spirals. Power pulses. Use your intuition.
+
 GENERIC PARTICLE FALLBACK SHAPES:
 If your custom paths below fail, these library IDs are used as fallback. Pick 2-3 that vaguely relate: ${SHAPE_LIST}
 
@@ -148,6 +162,7 @@ OUTPUT THIS EXACT JSON:
     ]
   },
   "lightning": { "enabled": true/false, "color": "#hex", "frequency": 0.1-0.5 },
+  "energyFlow": { "pattern": "radial-out"|"radial-in"|"rise"|"spiral"|"pulse"|"cascade", "speed": 0.3-2.0, "intensity": 0.3-1.0 },
   "intensity": 0.5-1.5
 }`;
 
@@ -179,6 +194,7 @@ Use the EXACT signature colors and visual identity of whatever "${prompt}" refer
 
 const VALID_STYLES: ParticleStyle[] = ['ember', 'sparkle', 'debris', 'lightning', 'bubble', 'orb'];
 const VALID_DRIFTS: ParticleDrift[] = ['rise', 'spiral', 'burst', 'float'];
+const VALID_FLOWS: EnergyFlowPattern[] = ['radial-out', 'radial-in', 'rise', 'spiral', 'pulse', 'cascade'];
 
 function clamp(v: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, v));
@@ -217,7 +233,7 @@ function sanitizeCustomPaths(
     } catch {
       continue;
     }
-    if (result.length >= 3) break;
+    if (result.length >= 2) break;
   }
   return result;
 }
@@ -263,6 +279,11 @@ function sanitizeParams(raw: Record<string, unknown>): AuraParams {
       color: String(r.lightning?.color || '#FFFFFF'),
       frequency: clamp(Number(r.lightning?.frequency) || 0.2, 0.05, 0.6),
     },
+    energyFlow: {
+      pattern: VALID_FLOWS.includes(r.energyFlow?.pattern) ? r.energyFlow.pattern : 'radial-out',
+      speed: clamp(numOr(r.energyFlow?.speed, 0.8), 0.3, 2.0),
+      intensity: clamp(numOr(r.energyFlow?.intensity, 0.6), 0.3, 1.0),
+    },
     intensity: clamp(Number(r.intensity) || 1.0, 0.3, 2.0),
   };
 }
@@ -277,6 +298,7 @@ export function getFallbackParams(element: string): AuraParams {
       flameContour: { baseColor: '#FF4500', tipColor: '#FFD700', speed: 1.2, jaggedness: 0.7, smoothness: 0.25, height: 1.2, thickness: 0.7, dualLayer: false },
       particles: { color: '#FF6600', secondaryColor: '#FFD700', count: 35, size: 2.5, speed: 1.3, style: 'ember', drift: 'rise', shapes: ['flame', 'star'] },
       lightning: { enabled: false, color: '#FFFFFF', frequency: 0.2 },
+      energyFlow: { pattern: 'rise', speed: 1.2, intensity: 0.7 },
       intensity: 1.1,
     },
     ice: {
@@ -286,6 +308,7 @@ export function getFallbackParams(element: string): AuraParams {
       flameContour: { baseColor: '#00BFFF', tipColor: '#E0F8FF', speed: 0.7, jaggedness: 0.4, smoothness: 0.6, height: 0.9, thickness: 0.6, dualLayer: false },
       particles: { color: '#B0E0FF', secondaryColor: '#FFFFFF', count: 30, size: 2, speed: 0.6, style: 'sparkle', drift: 'float', shapes: ['snowflake', 'diamond'] },
       lightning: { enabled: false, color: '#FFFFFF', frequency: 0.2 },
+      energyFlow: { pattern: 'cascade', speed: 0.6, intensity: 0.5 },
       intensity: 0.9,
     },
     void: {
@@ -295,6 +318,7 @@ export function getFallbackParams(element: string): AuraParams {
       flameContour: { baseColor: '#8B00FF', tipColor: '#FF00FF', speed: 1.0, jaggedness: 0.8, smoothness: 0.15, height: 1.3, thickness: 0.8, dualLayer: true, dualColor: '#1A0030' },
       particles: { color: '#CC66FF', secondaryColor: '#FF00FF', count: 40, size: 2, speed: 0.8, style: 'orb', drift: 'spiral', shapes: ['eye', 'spiral'] },
       lightning: { enabled: true, color: '#CC00FF', frequency: 0.15 },
+      energyFlow: { pattern: 'radial-in', speed: 0.7, intensity: 0.8 },
       intensity: 1.2,
     },
     thunder: {
@@ -304,6 +328,7 @@ export function getFallbackParams(element: string): AuraParams {
       flameContour: { baseColor: '#FFD700', tipColor: '#FFFFFF', speed: 1.5, jaggedness: 0.9, smoothness: 0.1, height: 1.1, thickness: 0.6, dualLayer: false },
       particles: { color: '#FFD700', secondaryColor: '#FFFFFF', count: 25, size: 2, speed: 1.5, style: 'lightning', drift: 'burst', shapes: ['lightning_bolt', 'bolt'] },
       lightning: { enabled: true, color: '#FFD700', frequency: 0.35 },
+      energyFlow: { pattern: 'radial-out', speed: 1.5, intensity: 0.8 },
       intensity: 1.3,
     },
     nature: {
@@ -313,6 +338,7 @@ export function getFallbackParams(element: string): AuraParams {
       flameContour: { baseColor: '#00FF88', tipColor: '#CCFF66', speed: 0.8, jaggedness: 0.35, smoothness: 0.7, height: 0.8, thickness: 0.7, dualLayer: false },
       particles: { color: '#66FF66', secondaryColor: '#FFFF00', count: 30, size: 3, speed: 0.7, style: 'sparkle', drift: 'float', shapes: ['leaf', 'droplet'] },
       lightning: { enabled: false, color: '#FFFFFF', frequency: 0.2 },
+      energyFlow: { pattern: 'pulse', speed: 0.6, intensity: 0.5 },
       intensity: 0.85,
     },
   };

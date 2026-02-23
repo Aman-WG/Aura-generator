@@ -381,6 +381,7 @@ export class AuraEngine {
 
     this.drawOuterGlow(ctx);
     this.drawFlameContour(ctx);
+    this.drawEnergyFlow(ctx);
     this.drawInnerGlow(ctx);
     this.drawParticles(ctx);
     this.drawLightning(ctx);
@@ -404,6 +405,123 @@ export class AuraEngine {
     ctx.beginPath();
     ctx.ellipse(this.cx, this.cy, rx, ry, 0, 0, Math.PI * 2);
     ctx.fill();
+    ctx.restore();
+  }
+
+  /**
+   * Animated energy flow — a moving color band inside the aura body.
+   * Uses source-atop compositing so it only shows where content already exists.
+   */
+  private drawEnergyFlow(ctx: CanvasRenderingContext2D): void {
+    const ef = this.params.energyFlow;
+    if (!ef || ef.intensity <= 0) return;
+
+    const t = this.time * ef.speed;
+    const r = Math.max(this.w, this.h) * 0.45 * this.params.intensity;
+    const baseColor = this.params.flameContour.baseColor;
+    const tipColor = this.params.flameContour.tipColor;
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'source-atop';
+    ctx.globalAlpha = ef.intensity * 0.55;
+
+    let grad: CanvasGradient;
+
+    switch (ef.pattern) {
+      case 'rise': {
+        // Repeating upward sweep — a bright band moves bottom to top
+        const phase = ((t * 0.5) % 1.0 + 1.0) % 1.0;
+        grad = ctx.createLinearGradient(this.cx, this.cy + r, this.cx, this.cy - r);
+        const bandW = 0.25;
+        const lo = Math.max(0, phase - bandW);
+        const hi = Math.min(1, phase + bandW);
+        grad.addColorStop(0, baseColor + '00');
+        if (lo > 0.01) grad.addColorStop(lo, baseColor + '00');
+        grad.addColorStop(Math.min(phase, 0.99), tipColor + 'BB');
+        if (hi < 0.99) grad.addColorStop(hi, baseColor + '00');
+        grad.addColorStop(1, baseColor + '00');
+        break;
+      }
+
+      case 'cascade': {
+        // Downward sweep — bright band falls top to bottom
+        const phase = ((t * 0.5) % 1.0 + 1.0) % 1.0;
+        grad = ctx.createLinearGradient(this.cx, this.cy - r, this.cx, this.cy + r);
+        const bandW = 0.25;
+        const lo = Math.max(0, phase - bandW);
+        const hi = Math.min(1, phase + bandW);
+        grad.addColorStop(0, baseColor + '00');
+        if (lo > 0.01) grad.addColorStop(lo, baseColor + '00');
+        grad.addColorStop(Math.min(phase, 0.99), tipColor + 'BB');
+        if (hi < 0.99) grad.addColorStop(hi, baseColor + '00');
+        grad.addColorStop(1, baseColor + '00');
+        break;
+      }
+
+      case 'radial-out': {
+        // Expanding ring from center outward
+        const phase = ((t * 0.4) % 1.0 + 1.0) % 1.0;
+        grad = ctx.createRadialGradient(this.cx, this.cy, 0, this.cx, this.cy, r);
+        const bandW = 0.18;
+        const lo = Math.max(0, phase - bandW);
+        const hi = Math.min(1, phase + bandW);
+        grad.addColorStop(0, baseColor + '00');
+        if (lo > 0.01) grad.addColorStop(lo, baseColor + '00');
+        grad.addColorStop(phase, tipColor + 'CC');
+        if (hi < 0.99) grad.addColorStop(hi, baseColor + '00');
+        grad.addColorStop(1, baseColor + '00');
+        break;
+      }
+
+      case 'radial-in': {
+        // Contracting ring from outer edge inward
+        const phase = 1.0 - (((t * 0.4) % 1.0 + 1.0) % 1.0);
+        grad = ctx.createRadialGradient(this.cx, this.cy, 0, this.cx, this.cy, r);
+        const bandW = 0.18;
+        const lo = Math.max(0, phase - bandW);
+        const hi = Math.min(1, phase + bandW);
+        grad.addColorStop(0, baseColor + '00');
+        if (lo > 0.01) grad.addColorStop(lo, baseColor + '00');
+        grad.addColorStop(Math.max(0.01, phase), tipColor + 'CC');
+        if (hi < 0.99) grad.addColorStop(hi, baseColor + '00');
+        grad.addColorStop(1, baseColor + '00');
+        break;
+      }
+
+      case 'pulse': {
+        // Breathing — the entire aura brightens and dims rhythmically
+        const breath = 0.5 + 0.5 * Math.sin(t * Math.PI);
+        grad = ctx.createRadialGradient(this.cx, this.cy, 0, this.cx, this.cy, r);
+        const alpha = Math.round(breath * 180).toString(16).padStart(2, '0');
+        grad.addColorStop(0, tipColor + '00');
+        grad.addColorStop(0.3, tipColor + alpha);
+        grad.addColorStop(0.65, baseColor + alpha);
+        grad.addColorStop(1, baseColor + '00');
+        break;
+      }
+
+      case 'spiral': {
+        // Rotating off-center glow that sweeps around the character
+        const angle = t * 1.5;
+        const offset = r * 0.35;
+        const ox = this.cx + Math.cos(angle) * offset;
+        const oy = this.cy + Math.sin(angle) * offset;
+        grad = ctx.createRadialGradient(ox, oy, 0, this.cx, this.cy, r);
+        grad.addColorStop(0, tipColor + 'CC');
+        grad.addColorStop(0.3, tipColor + '88');
+        grad.addColorStop(0.6, baseColor + '33');
+        grad.addColorStop(1, baseColor + '00');
+        break;
+      }
+
+      default: {
+        ctx.restore();
+        return;
+      }
+    }
+
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, this.w, this.h);
     ctx.restore();
   }
 

@@ -1216,16 +1216,12 @@
     0 0 14px 4px rgba(180, 74, 255, 0.5);
 }
 
-/* Footer — title + CTA buttons */
-.reveal-unlock__footer {
-  position: absolute;
-  bottom: 8%;
-  left: 0;
-  right: 0;
+/* CTA stack below character (vertical) */
+.reveal-unlock__cta-stack {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 18px;
+  gap: 12px;
   text-align: center;
   pointer-events: auto;
 }
@@ -1259,10 +1255,11 @@
   line-height: 1.6;
 }
 
-.reveal-unlock__actions {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+.reveal-unlock__cta-stack .pixel-btn {
+  width: 220px;
+}
+.reveal-unlock__cta-stack .pixel-btn--ghost {
+  width: 220px;
 }
 
 /* Ghost / secondary pixel button for Retry */
@@ -1579,4 +1576,194 @@
   right: 24px;
   border-bottom-width: 2px;
   border-right-width: 2px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   20. PROMPT INPUT UI
+   ═══════════════════════════════════════════════════════════════ */
+
+.prompt-ui {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.prompt-ui__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.prompt-ui__input-wrap {
+  flex: 1;
+  position: relative;
+}
+
+.prompt-ui__input {
+  width: 100%;
+  padding: 10px 60px 10px 14px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  color: #00ff41;
+  background: rgba(0, 255, 65, 0.06);
+  border: 1px solid rgba(0, 255, 65, 0.3);
+  border-radius: 6px;
+  outline: none;
+  text-shadow: 0 0 6px rgba(0, 255, 65, 0.4);
+}
+
+.prompt-ui__input::placeholder {
+  color: rgba(0, 255, 65, 0.3);
+  text-shadow: none;
+}
+
+.prompt-ui__input:focus {
+  border-color: rgba(0, 255, 65, 0.6);
+  box-shadow: 0 0 12px rgba(0, 255, 65, 0.15);
+}
+
+.prompt-ui__wc {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: rgba(0, 255, 65, 0.35);
+}
+
+.prompt-ui__wc--over {
+  color: #ff4444;
+}
+
+.prompt-ui__presets {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.prompt-ui__chip {
+  padding: 6px 12px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: #00ff41;
+  background: rgba(0, 255, 65, 0.08);
+  border: 1px solid rgba(0, 255, 65, 0.2);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-shadow: 0 0 4px rgba(0, 255, 65, 0.3);
+  white-space: nowrap;
+}
+
+.prompt-ui__chip:hover {
+  background: rgba(0, 255, 65, 0.15);
+  border-color: rgba(0, 255, 65, 0.5);
+  box-shadow: 0 0 10px rgba(0, 255, 65, 0.2);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   21. AURA MODIFIER PANEL
+   ═══════════════════════════════════════════════════════════════ */
+
+.aura-modifiers {
+  width: 100%;
+  padding: 20px 16px;
+  background: rgba(0, 0, 0, 0.65);
+  border: 1px solid rgba(0, 255, 65, 0.2);
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  pointer-events: auto;
+}
+
+.aura-modifiers__title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #00ff41;
+  text-shadow: 0 0 8px rgba(0, 255, 65, 0.5);
+  margin-bottom: 18px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.aura-modifiers__list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.aura-modifiers__item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.aura-modifiers__label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.aura-modifiers__icon {
+  font-size: 12px;
+}
+
+.aura-modifiers__slider-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.aura-modifiers__slider {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(
+    to right,
+    #00ff41 0%,
+    #00ff41 var(--slider-pct, 50%),
+    rgba(255, 255, 255, 0.12) var(--slider-pct, 50%),
+    rgba(255, 255, 255, 0.12) 100%
+  );
+  outline: none;
+  cursor: pointer;
+}
+
+.aura-modifiers__slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #00ff41;
+  box-shadow: 0 0 8px rgba(0, 255, 65, 0.6), 0 0 20px rgba(0, 255, 65, 0.2);
+  cursor: pointer;
+  border: 2px solid rgba(0, 0, 0, 0.4);
+}
+
+.aura-modifiers__slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #00ff41;
+  box-shadow: 0 0 8px rgba(0, 255, 65, 0.6), 0 0 20px rgba(0, 255, 65, 0.2);
+  cursor: pointer;
+  border: 2px solid rgba(0, 0, 0, 0.4);
+}
+
+.aura-modifiers__value {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: #00ff41;
+  min-width: 32px;
+  text-align: right;
+  text-shadow: 0 0 4px rgba(0, 255, 65, 0.4);
 }
