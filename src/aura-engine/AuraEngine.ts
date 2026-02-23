@@ -206,9 +206,11 @@ export class AuraEngine {
     const f = this.params.flameContour;
     const intensity = this.params.intensity;
 
-    // Approximate outer flame edge radius (ellipse semi-axes including spike amplitude)
-    const auraRx = this.w * 0.194 * f.thickness * intensity * (1 + f.jaggedness * 0.75) * (1 + f.height * 0.3);
-    const auraRy = this.h * 0.219 * intensity * f.height * (1 + f.jaggedness * 0.75);
+    // Approximate outer flame edge radius, accounting for smoothness size compensation
+    const sm = f.smoothness;
+    const sizeComp = 1.0 + sm * 0.25 * (1.0 - f.jaggedness * 0.5);
+    const auraRx = this.w * 0.194 * f.thickness * intensity * sizeComp * (1 + f.jaggedness * 0.75) * (1 + f.height * 0.3);
+    const auraRy = this.h * 0.219 * intensity * sizeComp * f.height * (1 + f.jaggedness * 0.75);
     // Kill distance: 1.5x the aura edge
     const killRx = auraRx * 1.5;
     const killRy = auraRy * 1.5;
@@ -290,12 +292,12 @@ export class AuraEngine {
     const hasCustom = this.customPath2Ds.length > 0;
     const roll = Math.random();
 
-    if (hasCustom && roll < 0.55) {
+    if (hasCustom && roll < 0.6) {
       pt.customPathIdx = Math.floor(Math.random() * this.customPath2Ds.length);
-      pt.size = p.size * (4.5 + Math.random() * 3.5);
-      pt.maxLife = 3.0 + Math.random() * 2.5;
-      pt.rotationSpeed = (Math.random() - 0.5) * 0.4;
-    } else if (hasShapes && roll < (hasCustom ? 0.75 : 0.60)) {
+      pt.size = p.size * (5.0 + Math.random() * 3.0);
+      pt.maxLife = 3.5 + Math.random() * 2.5;
+      pt.rotationSpeed = (Math.random() - 0.5) * 0.3;
+    } else if (hasShapes && roll < (hasCustom ? 0.8 : 0.60)) {
       pt.shapeIdx = Math.floor(Math.random() * shapes!.length);
       pt.size = p.size * (3.5 + Math.random() * 2.5);
       pt.maxLife = 2.5 + Math.random() * 2.0;
@@ -466,9 +468,16 @@ export class AuraEngine {
     const jagged = f.jaggedness;
 
     const sm = f.smoothness;
-    // When smoothness is high, dampen the spike-valley amplitude difference
-    // so the contour becomes more uniformly rounded / organic
-    const spikeDampen = 1.0 - sm * 0.7; // at sm=1.0 → spikes are only 30% of normal amplitude
+    // Dampen spike-valley amplitude when smoothness is high
+    const spikeDampen = 1.0 - sm * 0.65;
+
+    // Size compensation: jagged auras spike outward, smooth ones collapse inward.
+    // Boost the base radius for smooth auras so the overall visual size stays consistent.
+    // A jagged aura's average radius (spikes + valleys) is already large; a smooth one needs a boost.
+    const sizeCompensation = 1.0 + sm * 0.25 * (1.0 - jagged * 0.5);
+    const adjBaseW = baseW * sizeCompensation;
+    const adjBaseH = baseH * sizeCompensation;
+    const adjFlameH = flameH * sizeCompensation;
 
     const points: Array<{ x: number; y: number }> = [];
     for (let i = 0; i < pointCount; i++) {
@@ -491,8 +500,8 @@ export class AuraEngine {
       const n2 = Math.sin(t * 5.0 + this.flameOffsets[i] * 2.1 + angle * 7) * 0.12 * jagged * spikeDampen;
       const noise = (n1 + n2) * upBias;
 
-      const rx = baseW * spikeAmp * (1 + noise * 0.5) * upBias;
-      const ry = (isTop ? flameH : baseH * 0.65) * spikeAmp * (1 + noise * 0.3);
+      const rx = adjBaseW * spikeAmp * (1 + noise * 0.5) * upBias;
+      const ry = (isTop ? adjFlameH : adjBaseH * 0.65) * spikeAmp * (1 + noise * 0.3);
 
       points.push({
         x: this.cx + cosA * rx,

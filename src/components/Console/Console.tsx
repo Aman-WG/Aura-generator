@@ -10,9 +10,7 @@ interface ConsoleProps {
   isTyping: boolean;
   isTypingComplete: boolean;
   onInitiate: () => void;
-  onSelectElement: (element: string) => void;
-  onSelectEnergy: (energy: string) => void;
-  onGenerateAura: (chaos: string) => void;
+  onGenerateAura: (prompt: string) => void;
   onHover?: () => void;
 }
 
@@ -22,8 +20,6 @@ export function Console({
   isTyping,
   isTypingComplete,
   onInitiate,
-  onSelectElement,
-  onSelectEnergy,
   onGenerateAura,
   onHover,
 }: ConsoleProps) {
@@ -45,8 +41,6 @@ export function Console({
           phase={phase}
           isTypingComplete={isTypingComplete}
           onInitiate={onInitiate}
-          onSelectElement={onSelectElement}
-          onSelectEnergy={onSelectEnergy}
           onGenerateAura={onGenerateAura}
           onHover={onHover}
         />

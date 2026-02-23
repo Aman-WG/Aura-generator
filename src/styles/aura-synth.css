@@ -1057,14 +1057,39 @@
   );
 }
 
-/* Center stage container */
-.reveal-unlock__center {
+/* Two-column layout — modifiers left, character+CTAs right */
+.reveal-unlock__layout {
   position: absolute;
-  top: 42%;
-  left: 50%;
-  transform: translate(-50%, -55%);
-  width: 420px;
-  height: 420px;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 24px 40px;
+  pointer-events: auto;
+}
+
+.reveal-unlock__left {
+  flex: 0 0 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.reveal-unlock__right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  z-index: 10;
+}
+
+.reveal-unlock__character-area {
+  position: relative;
+  width: 360px;
+  height: 360px;
   display: flex;
   align-items: center;
   justify-content: center;

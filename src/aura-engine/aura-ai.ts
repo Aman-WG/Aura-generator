@@ -47,89 +47,69 @@ AURA NAME:
 Generate a 2-4 word name that sounds like an anime ultimate move or transformation. Make it drip with swagger and rizz. Examples: "Thunderclap Sovereign", "Abyssal Tide Unleashed", "Golden Gridlock Inferno", "Nocturnal Apex Protocol", "Eclipse of the Forsaken".
 
 AURA SHAPE & MOOD (VERY IMPORTANT — read the prompt's emotional energy):
-The aura's contour shape must match the PERSONALITY of the prompt. Not every aura is aggressive. Read the prompt and decide:
+The aura's contour shape must match the PERSONALITY of the prompt. Not every aura is aggressive.
 
-AGGRESSIVE / INTENSE prompts (war, villain, rage, explosion, demon, dragon, combat, thunder, wolverine claws):
-→ smoothness: 0.0-0.15, jaggedness: 0.7-1.0, speed: 1.2-2.0, height: 1.0-1.5
-→ particles: drift "burst" or "rise", style "debris" or "ember", speed 1.3-2.0
-→ Sharp spikes, fast-moving, tall, violent energy. Lightning enabled.
+You have TWO independent controls that you MUST set thoughtfully:
+- "smoothness" (0.0 to 1.0): How curved/organic the path drawing is. 0 = angular line segments, 1 = fully curved splines.
+- "jaggedness" (0.1 to 1.0): How much the contour spikes in and out. 0.1 = nearly circular, 1.0 = wild spikes.
 
-POWERFUL / HEROIC prompts (superhero, warrior, champion, king, goku, naruto, action):
-→ smoothness: 0.2-0.4, jaggedness: 0.5-0.8, speed: 0.8-1.5, height: 0.8-1.3
-→ particles: drift "rise" or "burst", style "ember" or "sparkle", speed 0.8-1.5
-→ Strong jagged contours but with some flow, dynamic
+These are INDEPENDENT. You can combine them in many ways:
+- Low smoothness + high jaggedness = sharp violent spikes (rage, combat, destruction)
+- High smoothness + low jaggedness = soft round glow (love, flowers, dreams)
+- High smoothness + medium jaggedness = ethereal flowing tendrils (angels, spirits, magic, positive heroes)
+- Medium smoothness + medium jaggedness = balanced dynamic energy (most characters, action, adventure)
+- Low smoothness + low jaggedness = geometric, crystalline (tech, cyber, ice, precision)
+- Medium smoothness + high jaggedness = wild but organic (storms, chaos, nature's fury)
 
-COOL / SLEEK prompts (cyberpunk, batman, stealth, ninja, assassin, shadow, ice):
-→ smoothness: 0.35-0.55, jaggedness: 0.35-0.55, speed: 0.6-1.0, height: 0.7-1.0
-→ particles: drift "float" or "spiral", style "orb" or "sparkle", speed 0.5-0.9
-→ Controlled, sharp but refined edges, steady pulse
+THINK about what the prompt's energy FEELS like, then pick the right combination. Most prompts are NOT at the extremes — they live somewhere in the middle. A beloved character is heroic but not violent. A magical creature is ethereal, not jagged. A funny topic is bouncy, not sharp.
 
-ELEGANT / FLOWING prompts (water, ocean, wind, music, dance, silk, angel, mermaid):
-→ smoothness: 0.65-0.9, jaggedness: 0.15-0.35, speed: 0.4-0.8, height: 0.6-1.0
-→ particles: drift "float" or "spiral", style "bubble" or "sparkle", speed 0.3-0.7
-→ Smooth organic curves, gentle undulation, graceful
+Speed and height also matter:
+- speed (0.3-2.0): How fast the contour animates. Calm = 0.3-0.6, normal = 0.6-1.2, intense = 1.2-2.0
+- height (0.5-1.5): How tall the aura extends above. Keep between 0.7-1.2 for most prompts. Only go to extremes for truly extreme moods.
 
-GENTLE / SOFT prompts (flowers, love, peace, healing, cloud, dream, baby, puppy, butterfly):
-→ smoothness: 0.85-1.0, jaggedness: 0.1-0.2, speed: 0.3-0.5, height: 0.5-0.8
-→ particles: drift "float", style "bubble" or "orb", speed 0.2-0.5
-→ Very smooth rounded contour, slow pulse, small and cozy. No lightning.
+Particle drift and style should match mood:
+- Calm/gentle → drift "float", style "bubble" or "orb", slow speed
+- Dynamic/heroic → drift "rise" or "spiral", style "sparkle" or "ember", medium speed
+- Aggressive/chaotic → drift "burst", style "debris" or "ember", fast speed
+- Mysterious/dark → drift "spiral" or "float", style "orb", slow speed
 
-PLAYFUL / FUN prompts (pikachu, candy, party, carnival, cartoon, pizza, gaming):
-→ smoothness: 0.5-0.7, jaggedness: 0.25-0.45, speed: 0.7-1.2, height: 0.7-1.0
-→ particles: drift "spiral" or "float", style "sparkle" or "bubble", speed 0.6-1.0
-→ Bouncy, rounded but lively, medium energy
-
-DARK / MYSTERIOUS prompts (void, ghost, shadow, curse, death, abyss, cosmic horror):
-→ smoothness: 0.4-0.6, jaggedness: 0.35-0.6, speed: 0.3-0.6, height: 0.8-1.2
-→ particles: drift "float" or "spiral", style "orb" or "debris", speed 0.3-0.6
-→ Organic but unsettling wavy curves, slow ominous pulse
-
-CRITICAL RULE: Read the prompt and FEEL its personality. Many prompts will blend moods — use your judgment to interpolate.
-The aura's shape should FEEL like the prompt when you look at it:
-- A flower aura → soft, round, gentle edges, slow float
-- A wolverine aura → sharp, violent spikes, fast burst
-- A ghost aura → wispy, eerie organic waves, slow drift
-- A party aura → bouncy, rounded, lively
-- An ocean aura → flowing, smooth, rhythmic
-DO NOT default to aggressive sharp angles for every prompt. Match the mood.
+DO NOT default to aggressive sharp angles. Most prompts deserve a balanced or flowing contour.
 
 GENERIC PARTICLE FALLBACK SHAPES:
 If your custom paths below fail, these library IDs are used as fallback. Pick 2-3 that vaguely relate: ${SHAPE_LIST}
 
-CUSTOM PARTICLE ILLUSTRATIONS (THIS IS THE MOST IMPORTANT PART):
-You must generate exactly 3 custom SVG path "d" strings. These are the SOUL of the aura — they float as glowing particles and must be INSTANTLY recognizable objects that relate to the student's prompt.
+CUSTOM PARTICLE ILLUSTRATIONS (MOST IMPORTANT PART):
+You must generate EXACTLY 2 custom SVG path "d" strings.
+These particles are the SOUL of the aura — they float as glowing silhouettes and must be THE SINGLE MOST ICONIC object a person would think of when they hear the prompt.
 
-YOUR CREATIVE PROCESS:
-1. Read the prompt carefully
-2. Think: what real-world objects, pop culture symbols, or iconic items does this prompt evoke?
-3. For EACH of the 3 paths, draw a DIFFERENT recognizable object as a filled silhouette
+HOW TO CHOOSE WHAT TO DRAW:
+Ask yourself: "If I say this prompt out loud to someone, what is the FIRST physical object that pops into their head?"
+That is your first particle. For the second, ask: "What is ONE more object deeply tied to this subject that would make someone go 'oh that's definitely about [prompt]'?"
 
-The student could type ANYTHING. Your job is to think creatively about what objects belong in that world:
-- A character name → draw their iconic gear, weapons, logos, or features
-- A movie/show → draw recognizable props, symbols, or characters from it
-- A food → draw the food item itself, utensils, or related objects
-- A sport → draw the ball, equipment, or trophy
-- An animal → draw the animal silhouette, paw prints, or habitat elements
-- A holiday → draw the holiday's iconic decorations or symbols
-- An abstract concept → draw metaphorical objects that represent it
-- ANYTHING else → use your world knowledge to pick 3 objects that a viewer would associate with the topic
+Rules for choosing:
+- Pick only objects with a STRONG, OBVIOUS, UNMISTAKABLE connection to the prompt
+- The 2 objects must be DIFFERENT from each other (not two views of the same thing)
+- Pick CONCRETE physical objects, not abstract concepts
+- If the prompt is a character/person: think of their single most iconic item or body feature, and one more signature element
+- If the prompt is an object: draw that object itself, plus something tightly associated with it
+- If the prompt is a concept: draw the most universally recognized symbol for it, plus one more associated object
+- NEVER pick generic objects (stars, circles, swirls) unless the prompt is literally about them
 
 SVG PATH FORMAT (48x48 coordinate space, 0,0 = top-left, 48,48 = bottom-right):
-- Use M (moveTo), L (lineTo), C (cubic bezier), Q (quadratic bezier), A (arc), Z (close) commands
-- Use CURVES (C, Q) for organic/round forms — straight lines only for angular objects
-- Fill the full 48x48 space — bigger shapes are more visible as particles
-- Multiple sub-paths OK: "M...Z M...Z" for shapes with holes or separate parts
+- Commands: M (moveTo), L (lineTo), C (cubic bezier), Q (quadratic bezier), A (arc), Z (close)
+- Use CURVES (C, Q) for organic/round shapes — L lines for angular mechanical shapes
+- Fill the FULL 48x48 space — small shapes are invisible as particles
+- Multiple sub-paths allowed: "M...Z M...Z" for compound shapes
 - Max 800 chars per path
+- Draw FILLED SILHOUETTES — these render as solid glowing shapes, not outlines
+- Ensure paths are CLOSED (end with Z)
 
-TECHNIQUE EXAMPLES (showing how to draw different types of objects):
-- Round face with features (head + ears + eyes): "M24 4 C16 4 6 10 6 20 C6 30 12 40 18 44 L24 42 L30 44 C36 40 42 30 42 20 C42 10 32 4 24 4 Z M10 8 L6 0 L14 10 Z M38 8 L42 0 L34 10 Z M17 22 C17 20 20 18 20 22 C20 24 17 24 17 22 Z M28 22 C28 20 31 18 31 22 C31 24 28 24 28 22 Z"
-- Circular object with inner detail (sphere + band + center): "M24 2 C36 2 46 12 46 24 C46 36 36 46 24 46 C12 46 2 36 2 24 C2 12 12 2 24 2 Z M2 22 L46 22 L46 26 L2 26 Z M24 18 C27 18 30 21 30 24 C30 27 27 30 24 30 C21 30 18 27 18 24 C18 21 21 18 24 18 Z"
-- Mechanical object (body + round parts): "M8 30 L12 28 L14 20 L18 18 L22 18 C26 18 28 16 30 14 L34 14 L38 16 L42 20 L44 24 L44 30 L40 30 C40 26 36 26 36 30 L20 30 C20 26 16 26 16 30 Z"
-- Organic curved shape (flowing brim + tapered body): "M10 40 C10 36 6 36 4 38 L4 42 L44 42 L44 38 C42 36 38 36 38 40 L36 30 L30 16 C28 10 26 6 24 4 Z"
-- Spread wing shape (curved spans): "M24 24 C18 20 4 8 2 4 C6 8 14 12 20 18 L24 24 L28 18 C34 12 42 8 46 4 C44 8 30 20 24 24 Z"
-These examples demonstrate TECHNIQUE only — your paths must depict objects uniquely tied to the student's prompt. Never copy these examples.
-
-Every prompt gets unique particles. A "pizza" aura should have a pizza slice, a chef hat, and a pepperoni. A "space" aura should have a rocket, a planet, and a star constellation. Think creatively.
+PATH DRAWING TECHNIQUE:
+- Start with the outer boundary of the object using M and curves
+- Add internal features as separate sub-paths (M...Z) for recognizable detail
+- For round objects: use C (cubic bezier) curves extensively
+- For angular objects: use L (lineTo) for edges
+- Center the shape around (24, 24) and extend close to the 0-48 edges
 
 SAFETY:
 - NEVER include violent, sexual, drug-related, or inappropriate themes
@@ -163,8 +143,8 @@ OUTPUT THIS EXACT JSON:
     "drift": "rise"|"spiral"|"burst"|"float",
     "shapes": ["shape_id_1", "shape_id_2", "shape_id_3"],
     "customPaths": [
-      { "name": "descriptive_name", "path": "M... SVG path d string" },
-      { "name": "descriptive_name_2", "path": "M... SVG path d string" }
+      { "name": "the_most_iconic_object_for_this_prompt", "path": "M... SVG path d string ...Z" },
+      { "name": "second_deeply_associated_object", "path": "M... SVG path d string ...Z" }
     ]
   },
   "lightning": { "enabled": true/false, "color": "#hex", "frequency": 0.1-0.5 },

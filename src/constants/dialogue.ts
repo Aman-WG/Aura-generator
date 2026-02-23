@@ -11,16 +11,8 @@ export const DIALOGUE: Record<Phase, DialogueLine[]> = {
     { text: "Let's fix that. Hit the button.", delay: 700 },
   ],
 
-  [PHASE.SELECT_ELEMENT]: [
-    { text: 'Pick your base element.', delay: 0 },
-  ],
-
-  [PHASE.SELECT_ENERGY]: [
-    { text: 'Now pick an energy field.', delay: 0 },
-  ],
-
-  [PHASE.CHAOS_INPUT]: [
-    { text: 'Last step. Type something weird to spice it up.', delay: 0 },
+  [PHASE.PROMPT]: [
+    { text: 'Describe the aura you want. Be wild.', delay: 0 },
   ],
 
   [PHASE.PROCESSING]: [
