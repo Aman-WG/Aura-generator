@@ -1,9 +1,9 @@
 import type { AuraParams, Particle, LightningBolt } from './types';
-import { drawThemedShape, SHAPE_REGISTRY } from './particle-shapes';
+import { drawThemedShape, drawCustomSVGPath, SHAPE_REGISTRY } from './particle-shapes';
 
 const TAU = Math.PI * 2;
 const LUT_SIZE = 360;
-const MAX_PARTICLES = 50;
+const MAX_PARTICLES = 25;
 const MAX_FLAME_POINTS = 48;
 const MAX_LIGHTNING_BOLTS = 3;
 const LIGHTNING_SEGMENTS = 6;
@@ -45,6 +45,9 @@ export class AuraEngine {
   private innerGrad: CanvasGradient | null = null;
   private outerGrad: CanvasGradient | null = null;
 
+  // AI-generated custom Path2D cache (rebuilt on setParams)
+  private customPath2Ds: Path2D[] = [];
+
   constructor(
     private backCanvas: HTMLCanvasElement,
     private frontCanvas: HTMLCanvasElement,
@@ -65,6 +68,25 @@ export class AuraEngine {
     this.innerGrad = null;
     this.outerGrad = null;
     this.resetParticles();
+    this.buildCustomPaths();
+  }
+
+  private buildCustomPaths(): void {
+    this.customPath2Ds = [];
+    const raw = this.params.particles.customPaths;
+    if (!raw || raw.length === 0) {
+      console.log('[AuraEngine] No custom paths provided');
+      return;
+    }
+    for (const entry of raw) {
+      try {
+        this.customPath2Ds.push(new Path2D(entry.path));
+        console.log(`[AuraEngine] Custom path loaded: "${entry.name}" (${entry.path.length} chars)`);
+      } catch {
+        console.warn(`[AuraEngine] Invalid custom path: "${entry.name}"`);
+      }
+    }
+    console.log(`[AuraEngine] ${this.customPath2Ds.length}/${raw.length} custom paths active`);
   }
 
   start(): void {
@@ -118,7 +140,7 @@ export class AuraEngine {
         x: 0, y: 0, vx: 0, vy: 0,
         alpha: 0, size: 0, life: 0, maxLife: 0,
         rotation: 0, rotationSpeed: 0, active: false,
-        useSecondary: false, shapeIdx: -1,
+        useSecondary: false, shapeIdx: -1, customPathIdx: -1,
       });
     }
   }
@@ -185,8 +207,8 @@ export class AuraEngine {
     const intensity = this.params.intensity;
 
     // Approximate outer flame edge radius (ellipse semi-axes including spike amplitude)
-    const auraRx = this.w * 0.24 * f.thickness * intensity * (1 + f.jaggedness * 0.75) * (1 + f.height * 0.3);
-    const auraRy = this.h * 0.27 * intensity * f.height * (1 + f.jaggedness * 0.75);
+    const auraRx = this.w * 0.194 * f.thickness * intensity * (1 + f.jaggedness * 0.75) * (1 + f.height * 0.3);
+    const auraRy = this.h * 0.219 * intensity * f.height * (1 + f.jaggedness * 0.75);
     // Kill distance: 1.5x the aura edge
     const killRx = auraRx * 1.5;
     const killRy = auraRy * 1.5;
@@ -223,8 +245,8 @@ export class AuraEngine {
 
         pt.alpha = alpha;
 
-        pt.x += pt.vx * dt * speed * 60;
-        pt.y += pt.vy * dt * speed * 60;
+        pt.x += pt.vx * dt * speed * 20;
+        pt.y += pt.vy * dt * speed * 20;
         pt.rotation += pt.rotationSpeed * dt;
 
         if (p.drift === 'spiral') {
@@ -236,7 +258,7 @@ export class AuraEngine {
     }
 
     // Spawn new particles to reach target count
-    const target = Math.min(p.count, MAX_PARTICLES);
+    const target = Math.min(Math.ceil(p.count * 0.5), MAX_PARTICLES);
     if (activeCount < target) {
       const toSpawn = Math.min(2, target - activeCount);
       for (let i = 0; i < toSpawn; i++) {
@@ -260,16 +282,25 @@ export class AuraEngine {
     pt.alpha = 0;
     pt.rotation = Math.random() * TAU;
     pt.useSecondary = Boolean(p.secondaryColor) && Math.random() > 0.5;
+    pt.shapeIdx = -1;
+    pt.customPathIdx = -1;
 
     const shapes = p.shapes;
     const hasShapes = shapes && shapes.length > 0;
-    if (hasShapes && Math.random() < 0.4) {
-      pt.shapeIdx = Math.floor(Math.random() * shapes.length);
+    const hasCustom = this.customPath2Ds.length > 0;
+    const roll = Math.random();
+
+    if (hasCustom && roll < 0.55) {
+      pt.customPathIdx = Math.floor(Math.random() * this.customPath2Ds.length);
+      pt.size = p.size * (4.5 + Math.random() * 3.5);
+      pt.maxLife = 3.0 + Math.random() * 2.5;
+      pt.rotationSpeed = (Math.random() - 0.5) * 0.4;
+    } else if (hasShapes && roll < (hasCustom ? 0.75 : 0.60)) {
+      pt.shapeIdx = Math.floor(Math.random() * shapes!.length);
       pt.size = p.size * (3.5 + Math.random() * 2.5);
       pt.maxLife = 2.5 + Math.random() * 2.0;
-      pt.rotationSpeed = (Math.random() - 0.5) * 1.2;
+      pt.rotationSpeed = (Math.random() - 0.5) * 0.8;
     } else {
-      pt.shapeIdx = -1;
       pt.size = p.size * (0.6 + Math.random() * 0.8);
       pt.maxLife = 1.5 + Math.random() * 2.5;
       pt.rotationSpeed = (Math.random() - 0.5) * 2;
@@ -427,12 +458,17 @@ export class AuraEngine {
   private buildFlamePoints(scaleMul: number): Array<{ x: number; y: number }> {
     const f = this.params.flameContour;
     const intensity = this.params.intensity;
-    const baseW = this.w * 0.24 * f.thickness * intensity * scaleMul;
-    const baseH = this.h * 0.27 * intensity * scaleMul;
+    const baseW = this.w * 0.194 * f.thickness * intensity * scaleMul;
+    const baseH = this.h * 0.219 * intensity * scaleMul;
     const flameH = baseH * f.height;
     const t = this.time * f.speed;
     const pointCount = MAX_FLAME_POINTS;
     const jagged = f.jaggedness;
+
+    const sm = f.smoothness;
+    // When smoothness is high, dampen the spike-valley amplitude difference
+    // so the contour becomes more uniformly rounded / organic
+    const spikeDampen = 1.0 - sm * 0.7; // at sm=1.0 → spikes are only 30% of normal amplitude
 
     const points: Array<{ x: number; y: number }> = [];
     for (let i = 0; i < pointCount; i++) {
@@ -448,11 +484,11 @@ export class AuraEngine {
 
       const isSpike = i % 2 === 0;
       const spikeAmp = isSpike
-        ? 1.0 + jagged * (0.4 + 0.35 * Math.sin(t * 3.2 + this.flameOffsets[i]))
-        : 1.0 - jagged * (0.15 + 0.1 * Math.sin(t * 2.8 + this.flameOffsets[i] * 1.3));
+        ? 1.0 + jagged * spikeDampen * (0.4 + 0.35 * Math.sin(t * 3.2 + this.flameOffsets[i]))
+        : 1.0 - jagged * spikeDampen * (0.15 + 0.1 * Math.sin(t * 2.8 + this.flameOffsets[i] * 1.3));
 
-      const n1 = Math.sin(t * 2.5 + this.flameOffsets[i] + angle * 4) * 0.2;
-      const n2 = Math.sin(t * 5.0 + this.flameOffsets[i] * 2.1 + angle * 7) * 0.12 * jagged;
+      const n1 = Math.sin(t * 2.5 + this.flameOffsets[i] + angle * 4) * 0.2 * spikeDampen;
+      const n2 = Math.sin(t * 5.0 + this.flameOffsets[i] * 2.1 + angle * 7) * 0.12 * jagged * spikeDampen;
       const noise = (n1 + n2) * upBias;
 
       const rx = baseW * spikeAmp * (1 + noise * 0.5) * upBias;
@@ -571,8 +607,9 @@ export class AuraEngine {
     ctx.restore();
   }
 
-  // Build a closed flame path using smoothness to blend sharp ↔ smooth
-  // s=0: direct lineTo (jagged spikes), s=1: quadraticCurveTo through midpoints (flowing)
+  // Build a closed flame path using smoothness to blend sharp ↔ smooth.
+  // s=0: direct lineTo (jagged spikes), s=1: full cubic Catmull-Rom (flowing organic).
+  // Intermediate values blend linearly between the angular and smooth paths.
   private buildFlamePath(
     ctx: CanvasRenderingContext2D,
     points: Array<{ x: number; y: number }>,
@@ -582,28 +619,30 @@ export class AuraEngine {
 
     ctx.beginPath();
 
-    if (s < 0.15) {
-      // Fully sharp
+    if (s < 0.05) {
+      // Fully sharp — direct line segments
       ctx.moveTo(points[0].x, points[0].y);
       for (let i = 1; i < len; i++) ctx.lineTo(points[i].x, points[i].y);
-    } else if (s > 0.85) {
-      // Fully smooth — quadratic through midpoints
+    } else if (s > 0.6) {
+      // Smooth — Catmull-Rom spline through all points for organic curves
       const first = points[0], second = points[1];
       ctx.moveTo((first.x + second.x) / 2, (first.y + second.y) / 2);
-      for (let i = 1; i < len; i++) {
+      for (let i = 0; i < len; i++) {
         const curr = points[i];
         const next = points[(i + 1) % len];
         ctx.quadraticCurveTo(curr.x, curr.y, (curr.x + next.x) / 2, (curr.y + next.y) / 2);
       }
     } else {
-      // Blend: sharp vertex on spike points, smooth curves on valley points
-      // Higher smoothness → more points get the smooth treatment
-      const smoothThreshold = 1.0 - s;
+      // Blend: deterministically smooth valley points, keep spike points sharp.
+      // Every other point (valleys) uses quadratic curves; spikes use lineTo.
+      // The smoothness value controls what fraction of points get curved treatment.
       ctx.moveTo(points[0].x, points[0].y);
       for (let i = 1; i < len; i++) {
         const curr = points[i];
         const isValley = i % 2 !== 0;
-        if (isValley && Math.random() > smoothThreshold) {
+        // Deterministic: smooth valley points when s > threshold for this point
+        const pointPhase = (i * 7 + 3) % len / len; // stable hash per point index
+        if (isValley && pointPhase < s * 1.6) {
           const next = points[(i + 1) % len];
           ctx.quadraticCurveTo(curr.x, curr.y, (curr.x + next.x) / 2, (curr.y + next.y) / 2);
         } else {
@@ -690,7 +729,13 @@ export class AuraEngine {
       ctx.globalAlpha = pt.alpha * 0.9;
       const color = (pt.useSecondary && p.secondaryColor) ? p.secondaryColor : p.color;
 
-      // Themed shape particle
+      // Custom AI-generated path particle (highest priority)
+      if (pt.customPathIdx >= 0 && this.customPath2Ds[pt.customPathIdx]) {
+        drawCustomSVGPath(ctx, this.customPath2Ds[pt.customPathIdx], pt.x, pt.y, pt.size, pt.rotation, color);
+        continue;
+      }
+
+      // Library themed shape particle
       if (pt.shapeIdx >= 0 && shapes && shapes[pt.shapeIdx]) {
         const shapeId = shapes[pt.shapeIdx];
         if (SHAPE_REGISTRY[shapeId]) {

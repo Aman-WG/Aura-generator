@@ -24,7 +24,7 @@ const RETRACT_DURATION = 1500;
  */
 export function Layout() {
   const synth = useSynthesizer();
-  const { play } = useSound();
+  const sfx = useSound();
   const bridge = useBridge();
 
   const [showIntro, setShowIntro] = useState(true);
@@ -74,46 +74,48 @@ export function Layout() {
   const tw = useTypewriter(currentLines, startTyping, {
     speed: 25,
     lineDelay: 400,
-    onLineComplete: () => play('keystroke'),
+    onChar: () => sfx.typewriterTick(),
+    onLineComplete: () => sfx.keystroke(),
   });
 
   // ─── Handlers ──────────────────────────────────────────────
 
   const handleInitiate = useCallback(() => {
-    play('click');
+    sfx.initiate();
     setScannerVisible(true);
     synth.setPhase(PHASE.SELECT_ELEMENT);
-  }, [play, synth]);
+  }, [sfx, synth]);
 
   const handleSelectElement = useCallback((element: string) => {
-    play('click');
+    sfx.select();
     synth.setElement(element);
     setArmsEntered(true);
-    // Delay sprite fire: wait for slide-in + bounce to settle, then 300ms gap
-    // Scanner fires in sync with arms
     setTimeout(() => {
+      sfx.laserBurst();
       setArmFireTrigger((n) => n + 1);
       setScannerFireTrigger((n) => n + 1);
     }, 1100);
     synth.setPhase(PHASE.SELECT_ENERGY);
-  }, [play, synth]);
+  }, [sfx, synth]);
 
   const handleSelectEnergy = useCallback((energy: string) => {
-    play('click');
+    sfx.select();
     synth.setEnergy(energy);
-    // Arms already in position, just a 300ms gap before firing
-    // Scanner fires in sync
     setTimeout(() => {
+      sfx.laserBurst();
       setArmFireTrigger((n) => n + 1);
       setScannerFireTrigger((n) => n + 1);
     }, 300);
     synth.setPhase(PHASE.CHAOS_INPUT);
-  }, [play, synth]);
+  }, [sfx, synth]);
 
   const aiAbortRef = useRef<AbortController | null>(null);
 
   const handleGenerateAura = useCallback((chaos: string) => {
-    play('glitch');
+    sfx.glitch();
+    sfx.startMachine();
+    sfx.startLaser();
+    sfx.startTension();
     synth.setChaos(chaos);
     synth.setPhase(PHASE.PROCESSING);
     synth.setShaking(true);
@@ -125,10 +127,16 @@ export function Layout() {
 
     const element = synth.auraConfig.element ?? 'energy';
     const energy = synth.auraConfig.energy ?? 'surge';
-    const apiKey = localStorage.getItem('aura_gemini_key') ?? '';
+    const savedProvider = localStorage.getItem('aura_provider') ?? 'gemini';
+    const apiKey =
+      savedProvider === 'portkey'
+        ? localStorage.getItem('aura_portkey_key') ?? ''
+        : savedProvider === 'openai'
+          ? localStorage.getItem('aura_openai_key') ?? ''
+          : localStorage.getItem('aura_gemini_key') ?? '';
 
     const aiPromise = apiKey
-      ? generateAuraParams(element, energy, chaos, apiKey, 'gemini')
+      ? generateAuraParams(element, energy, chaos, apiKey, savedProvider as 'gemini' | 'openai' | 'portkey')
       : Promise.resolve({ params: getFallbackParams(element), source: 'fallback' as const, error: undefined });
 
     const timerPromise = new Promise<void>((r) => setTimeout(r, GENERATION_DURATION));
@@ -136,33 +144,36 @@ export function Layout() {
     Promise.all([aiPromise, timerPromise]).then(([result]) => {
       if (abort.signal.aborted) return;
 
+      sfx.stopMachine();
+      sfx.stopLaser();
+      sfx.stopTension();
+      sfx.shatterReveal();
+
       synth.setAuraParams(result.params);
       synth.setAuraError({ source: result.source, error: result.error });
       synth.setShaking(false);
       setIsGenerating(false);
+      synth.setPhase(PHASE.REVEAL);
+
       setScannerVisible(false);
       setArmsEntered(false);
-
-      setTimeout(() => {
-        synth.setPhase(PHASE.REVEAL);
-      }, RETRACT_DURATION);
     });
-  }, [play, synth]);
+  }, [sfx, synth]);
 
   const handleEquipAura = useCallback(() => {
-    play('click');
+    sfx.equip();
     bridge.sendEquipped(synth.auraConfig, synth.auraParams ?? undefined);
-  }, [play, bridge, synth.auraConfig, synth.auraParams]);
+  }, [sfx, bridge, synth.auraConfig, synth.auraParams]);
 
   const handleRetry = useCallback(() => {
-    play('click');
+    sfx.select();
     bridge.sendRetry();
     setAttemptCount((n) => n + 1);
     synth.reset();
     setScannerVisible(false);
     setArmsEntered(false);
     setIsGenerating(false);
-  }, [play, synth, bridge]);
+  }, [sfx, synth, bridge]);
 
   const consoleHeight =
     synth.phase === PHASE.CHAOS_INPUT ? '24%'
@@ -175,7 +186,7 @@ export function Layout() {
     <div className="game-viewport">
       <div className="game-window">
         <AnimatePresence>
-          {showIntro && <IntroSplash onComplete={handleIntroComplete} />}
+          {showIntro && <IntroSplash onComplete={handleIntroComplete} onSound={sfx.introWhoosh} />}
         </AnimatePresence>
 
         <div className="game-window__stage">
@@ -189,6 +200,7 @@ export function Layout() {
             isGenerating={isGenerating}
             onEquipAura={handleEquipAura}
             onRetry={handleRetry}
+            onHover={sfx.hover}
             avatarImageUrl={bridge.avatarData?.avatarImageUrl}
             auraParams={synth.auraParams}
             auraError={synth.auraError}
@@ -209,6 +221,7 @@ export function Layout() {
               onSelectElement={handleSelectElement}
               onSelectEnergy={handleSelectEnergy}
               onGenerateAura={handleGenerateAura}
+              onHover={sfx.hover}
             />
           </div>
         )}

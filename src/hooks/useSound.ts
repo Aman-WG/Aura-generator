@@ -1,59 +1,78 @@
-import { useRef, useCallback } from 'react';
-
-type SoundName = 'keystroke' | 'click' | 'whoosh' | 'glitch' | 'reveal' | 'lock';
-
-// Sound effect URLs — replace these with your actual SFX files in /public/sfx/
-const SOUND_MAP: Record<SoundName, string> = {
-  keystroke: '/sfx/keystroke.mp3',
-  click: '/sfx/click.mp3',
-  whoosh: '/sfx/whoosh.mp3',
-  glitch: '/sfx/glitch.mp3',
-  reveal: '/sfx/reveal.mp3',
-  lock: '/sfx/lock.mp3',
-};
+import { useCallback, useRef, useEffect } from 'react';
+import { soundManager } from '../sound/SoundManager';
 
 interface UseSoundOptions {
-  volume?: number;
   enabled?: boolean;
 }
 
 /**
- * Lightweight sound hook using HTML5 Audio.
- * Drop your .mp3 files into /public/sfx/ and they'll just work.
- * Gracefully fails if files are missing (no crash, just silence).
+ * React hook wrapping the ZzFX-based SoundManager.
+ * Provides stable callbacks for every sound in the Aura Lab flow
+ * and auto-cleans up all looping sounds on unmount.
  */
 export function useSound(options: UseSoundOptions = {}) {
-  const { volume = 0.5, enabled = true } = options;
-  const audioCache = useRef<Map<string, HTMLAudioElement>>(new Map());
+  const { enabled = true } = options;
+  const machineStopRef = useRef<(() => void) | null>(null);
+  const tensionStopRef = useRef<(() => void) | null>(null);
 
-  const play = useCallback(
-    (name: SoundName) => {
-      if (!enabled) return;
+  useEffect(() => {
+    soundManager.setEnabled(enabled);
+  }, [enabled]);
 
-      try {
-        const src = SOUND_MAP[name];
-        if (!src) return;
+  useEffect(() => {
+    return () => soundManager.stopAll();
+  }, []);
 
-        let audio = audioCache.current.get(name);
+  const hover = useCallback(() => soundManager.playHover(), []);
+  const select = useCallback(() => soundManager.playSelectElement(), []);
+  const keystroke = useCallback(() => soundManager.playKeystroke(), []);
+  const typewriterTick = useCallback(() => soundManager.playTypewriterTick(), []);
+  const initiate = useCallback(() => soundManager.playInitiate(), []);
+  const glitch = useCallback(() => soundManager.playGlitch(), []);
+  const shatterReveal = useCallback(() => soundManager.playShatterReveal(), []);
+  const equip = useCallback(() => soundManager.playEquip(), []);
+  const introWhoosh = useCallback(() => soundManager.playIntroWhoosh(), []);
 
-        if (!audio) {
-          audio = new Audio(src);
-          audio.volume = volume;
-          audioCache.current.set(name, audio);
-        }
+  const laserBurst = useCallback(() => soundManager.playLaserBurst(), []);
+  const startLaser = useCallback(() => soundManager.startLaser(), []);
+  const stopLaser = useCallback(() => soundManager.stopLaser(), []);
 
-        // Reset and play (allows rapid re-triggers)
-        audio.currentTime = 0;
-        audio.volume = volume;
-        audio.play().catch(() => {
-          // Silently fail — browser may block autoplay
-        });
-      } catch {
-        // No crash on missing files
-      }
-    },
-    [volume, enabled]
-  );
+  const startMachine = useCallback(() => {
+    machineStopRef.current?.();
+    machineStopRef.current = soundManager.playMachineLoading();
+  }, []);
 
-  return { play };
+  const stopMachine = useCallback(() => {
+    machineStopRef.current?.();
+    machineStopRef.current = null;
+  }, []);
+
+  const startTension = useCallback(() => {
+    tensionStopRef.current?.();
+    tensionStopRef.current = soundManager.startTension();
+  }, []);
+
+  const stopTension = useCallback(() => {
+    tensionStopRef.current?.();
+    tensionStopRef.current = null;
+  }, []);
+
+  return {
+    hover,
+    select,
+    keystroke,
+    typewriterTick,
+    initiate,
+    glitch,
+    shatterReveal,
+    equip,
+    introWhoosh,
+    laserBurst,
+    startLaser,
+    stopLaser,
+    startMachine,
+    stopMachine,
+    startTension,
+    stopTension,
+  };
 }

@@ -1024,6 +1024,14 @@
   mix-blend-mode: overlay;
 }
 
+.stage__flashbang {
+  position: absolute;
+  inset: 0;
+  z-index: 46;
+  pointer-events: none;
+  background: #fff;
+}
+
 
 /* ═══════════════════════════════════════════════════════════════
    13c. REVEAL UNLOCK — Brawl-Stars-style character showcase

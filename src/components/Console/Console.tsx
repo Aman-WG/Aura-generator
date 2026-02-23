@@ -13,6 +13,7 @@ interface ConsoleProps {
   onSelectElement: (element: string) => void;
   onSelectEnergy: (energy: string) => void;
   onGenerateAura: (chaos: string) => void;
+  onHover?: () => void;
 }
 
 export function Console({
@@ -24,6 +25,7 @@ export function Console({
   onSelectElement,
   onSelectEnergy,
   onGenerateAura,
+  onHover,
 }: ConsoleProps) {
   const isRow = phase === PHASE.IDLE;
 
@@ -46,6 +48,7 @@ export function Console({
           onSelectElement={onSelectElement}
           onSelectEnergy={onSelectEnergy}
           onGenerateAura={onGenerateAura}
+          onHover={onHover}
         />
       </div>
     </motion.div>

@@ -313,32 +313,352 @@ const snake: ShapeFn = (ctx, s) => {
   ctx.fill();
 };
 
+// ── Additional themed shapes ─────────────────────────────────
+
+const claw_marks: ShapeFn = (ctx, s) => {
+  ctx.lineWidth = s * 0.2;
+  ctx.lineCap = 'round';
+  for (let i = -1; i <= 1; i++) {
+    ctx.beginPath();
+    ctx.moveTo(i * s * 0.35, -s);
+    ctx.lineTo(i * s * 0.35 + s * 0.15, s);
+    ctx.stroke();
+  }
+};
+
+const batarang: ShapeFn = (ctx, s) => {
+  ctx.beginPath();
+  ctx.moveTo(0, -s * 0.3);
+  ctx.lineTo(-s * 0.4, -s);
+  ctx.quadraticCurveTo(-s, -s * 0.5, -s, 0);
+  ctx.quadraticCurveTo(-s, s * 0.3, -s * 0.5, s * 0.2);
+  ctx.lineTo(0, s * 0.5);
+  ctx.lineTo(s * 0.5, s * 0.2);
+  ctx.quadraticCurveTo(s, s * 0.3, s, 0);
+  ctx.quadraticCurveTo(s, -s * 0.5, s * 0.4, -s);
+  ctx.closePath();
+  ctx.fill();
+};
+
+const kunai: ShapeFn = (ctx, s) => {
+  ctx.beginPath();
+  ctx.moveTo(0, -s);
+  ctx.lineTo(s * 0.3, -s * 0.1);
+  ctx.lineTo(s * 0.1, 0);
+  ctx.lineTo(s * 0.1, s * 0.5);
+  ctx.lineTo(s * 0.25, s * 0.5);
+  ctx.lineTo(s * 0.25, s * 0.6);
+  ctx.lineTo(-s * 0.25, s * 0.6);
+  ctx.lineTo(-s * 0.25, s * 0.5);
+  ctx.lineTo(-s * 0.1, s * 0.5);
+  ctx.lineTo(-s * 0.1, 0);
+  ctx.lineTo(-s * 0.3, -s * 0.1);
+  ctx.closePath();
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(0, s * 0.85, s * 0.18, 0, Math.PI * 2);
+  ctx.stroke();
+};
+
+const shuriken: ShapeFn = (ctx, s) => {
+  ctx.beginPath();
+  for (let i = 0; i < 4; i++) {
+    const a = (i * 90 - 45) * (Math.PI / 180);
+    const na = ((i * 90 + 45) - 45) * (Math.PI / 180);
+    ctx.lineTo(Math.cos(a) * s, Math.sin(a) * s);
+    ctx.lineTo(Math.cos(na) * s * 0.3, Math.sin(na) * s * 0.3);
+  }
+  ctx.closePath();
+  ctx.fill();
+};
+
+const rocket: ShapeFn = (ctx, s) => {
+  ctx.beginPath();
+  ctx.moveTo(0, -s);
+  ctx.quadraticCurveTo(s * 0.35, -s * 0.5, s * 0.3, s * 0.2);
+  ctx.lineTo(s * 0.6, s * 0.7);
+  ctx.lineTo(s * 0.2, s * 0.5);
+  ctx.lineTo(0, s);
+  ctx.lineTo(-s * 0.2, s * 0.5);
+  ctx.lineTo(-s * 0.6, s * 0.7);
+  ctx.lineTo(-s * 0.3, s * 0.2);
+  ctx.quadraticCurveTo(-s * 0.35, -s * 0.5, 0, -s);
+  ctx.closePath();
+  ctx.fill();
+};
+
+const planet: ShapeFn = (ctx, s) => {
+  ctx.beginPath();
+  ctx.arc(0, 0, s * 0.55, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.lineWidth = s * 0.1;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, s, s * 0.25, -0.3, 0, Math.PI * 2);
+  ctx.stroke();
+};
+
+const car: ShapeFn = (ctx, s) => {
+  ctx.beginPath();
+  ctx.moveTo(-s, s * 0.2);
+  ctx.lineTo(-s * 0.7, s * 0.2);
+  ctx.lineTo(-s * 0.5, -s * 0.3);
+  ctx.lineTo(s * 0.2, -s * 0.3);
+  ctx.lineTo(s * 0.5, s * 0.2);
+  ctx.lineTo(s, s * 0.2);
+  ctx.lineTo(s, s * 0.5);
+  ctx.lineTo(-s, s * 0.5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(-s * 0.55, s * 0.55, s * 0.2, 0, Math.PI * 2);
+  ctx.arc(s * 0.55, s * 0.55, s * 0.2, 0, Math.PI * 2);
+  ctx.fill();
+};
+
+const football: ShapeFn = (ctx, s) => {
+  ctx.beginPath();
+  ctx.ellipse(0, 0, s, s * 0.6, Math.PI / 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.lineWidth = s * 0.08;
+  ctx.strokeStyle = ctx.fillStyle;
+  ctx.save();
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.beginPath();
+  ctx.moveTo(-s * 0.4, s * 0.4);
+  ctx.lineTo(s * 0.4, -s * 0.4);
+  ctx.stroke();
+  ctx.restore();
+};
+
+const trophy: ShapeFn = (ctx, s) => {
+  ctx.beginPath();
+  ctx.moveTo(-s * 0.4, -s);
+  ctx.lineTo(s * 0.4, -s);
+  ctx.lineTo(s * 0.35, -s * 0.3);
+  ctx.quadraticCurveTo(s * 0.3, s * 0.1, 0, s * 0.2);
+  ctx.quadraticCurveTo(-s * 0.3, s * 0.1, -s * 0.35, -s * 0.3);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillRect(-s * 0.08, s * 0.2, s * 0.16, s * 0.4);
+  ctx.fillRect(-s * 0.3, s * 0.6, s * 0.6, s * 0.15);
+  ctx.beginPath();
+  ctx.moveTo(-s * 0.7, -s * 0.8);
+  ctx.quadraticCurveTo(-s * 0.8, -s * 0.2, -s * 0.4, -s * 0.2);
+  ctx.moveTo(s * 0.7, -s * 0.8);
+  ctx.quadraticCurveTo(s * 0.8, -s * 0.2, s * 0.4, -s * 0.2);
+  ctx.lineWidth = s * 0.08;
+  ctx.stroke();
+};
+
+const guitar: ShapeFn = (ctx, s) => {
+  ctx.beginPath();
+  ctx.ellipse(0, s * 0.3, s * 0.45, s * 0.55, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillRect(-s * 0.06, -s, s * 0.12, s * 1.3);
+  ctx.fillRect(-s * 0.25, -s, s * 0.5, s * 0.1);
+};
+
+const tree: ShapeFn = (ctx, s) => {
+  ctx.beginPath();
+  ctx.moveTo(0, -s);
+  ctx.lineTo(s * 0.5, -s * 0.2);
+  ctx.lineTo(s * 0.3, -s * 0.2);
+  ctx.lineTo(s * 0.6, s * 0.3);
+  ctx.lineTo(s * 0.35, s * 0.3);
+  ctx.lineTo(s * 0.7, s * 0.7);
+  ctx.lineTo(-s * 0.7, s * 0.7);
+  ctx.lineTo(-s * 0.35, s * 0.3);
+  ctx.lineTo(-s * 0.6, s * 0.3);
+  ctx.lineTo(-s * 0.3, -s * 0.2);
+  ctx.lineTo(-s * 0.5, -s * 0.2);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillRect(-s * 0.1, s * 0.7, s * 0.2, s * 0.3);
+};
+
+const moon: ShapeFn = (ctx, s) => {
+  ctx.beginPath();
+  ctx.arc(0, 0, s * 0.9, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.save();
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.beginPath();
+  ctx.arc(s * 0.35, -s * 0.2, s * 0.7, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+};
+
+const candy_cane: ShapeFn = (ctx, s) => {
+  ctx.lineWidth = s * 0.25;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.arc(s * 0.15, -s * 0.5, s * 0.35, Math.PI, 0);
+  ctx.lineTo(s * 0.5, s);
+  ctx.stroke();
+};
+
+const cowl: ShapeFn = (ctx, s) => {
+  ctx.beginPath();
+  ctx.moveTo(-s * 0.6, s * 0.7);
+  ctx.lineTo(-s * 0.55, 0);
+  ctx.lineTo(-s * 0.7, -s * 0.5);
+  ctx.lineTo(-s * 0.3, -s);
+  ctx.lineTo(-s * 0.2, -s * 0.4);
+  ctx.lineTo(0, -s * 0.55);
+  ctx.lineTo(s * 0.2, -s * 0.4);
+  ctx.lineTo(s * 0.3, -s);
+  ctx.lineTo(s * 0.7, -s * 0.5);
+  ctx.lineTo(s * 0.55, 0);
+  ctx.lineTo(s * 0.6, s * 0.7);
+  ctx.quadraticCurveTo(0, s * 0.9, -s * 0.6, s * 0.7);
+  ctx.closePath();
+  ctx.fill();
+};
+
+const wave: ShapeFn = (ctx, s) => {
+  ctx.beginPath();
+  ctx.moveTo(-s, s * 0.3);
+  ctx.quadraticCurveTo(-s * 0.5, -s * 0.8, 0, 0);
+  ctx.quadraticCurveTo(s * 0.3, s * 0.3, s * 0.5, -s * 0.2);
+  ctx.quadraticCurveTo(s * 0.7, -s * 0.5, s, -s);
+  ctx.lineTo(s, s);
+  ctx.lineTo(-s, s);
+  ctx.closePath();
+  ctx.fill();
+};
+
+const anchor: ShapeFn = (ctx, s) => {
+  ctx.lineWidth = s * 0.15;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.arc(0, -s * 0.65, s * 0.25, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(0, -s * 0.4);
+  ctx.lineTo(0, s * 0.6);
+  ctx.moveTo(-s * 0.5, -s * 0.4);
+  ctx.lineTo(s * 0.5, -s * 0.4);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(-s * 0.5, s * 0.6, s * 0.35, -Math.PI * 0.5, Math.PI * 0.3);
+  ctx.moveTo(s * 0.5, s * 0.25);
+  ctx.arc(s * 0.5, s * 0.6, s * 0.35, -Math.PI * 0.5, Math.PI, true);
+  ctx.stroke();
+};
+
+const feather: ShapeFn = (ctx, s) => {
+  ctx.beginPath();
+  ctx.moveTo(0, -s);
+  ctx.quadraticCurveTo(s * 0.7, -s * 0.3, s * 0.3, s * 0.5);
+  ctx.quadraticCurveTo(s * 0.1, s * 0.8, 0, s);
+  ctx.quadraticCurveTo(-s * 0.05, s * 0.7, 0, s * 0.4);
+  ctx.quadraticCurveTo(-s * 0.1, -s * 0.3, 0, -s);
+  ctx.closePath();
+  ctx.fill();
+};
+
+const gear: ShapeFn = (ctx, s) => {
+  const teeth = 8;
+  ctx.beginPath();
+  for (let i = 0; i < teeth; i++) {
+    const a1 = (i / teeth) * TAU;
+    const a2 = ((i + 0.3) / teeth) * TAU;
+    const a3 = ((i + 0.5) / teeth) * TAU;
+    const a4 = ((i + 0.8) / teeth) * TAU;
+    ctx.lineTo(Math.cos(a1) * s * 0.7, Math.sin(a1) * s * 0.7);
+    ctx.lineTo(Math.cos(a2) * s, Math.sin(a2) * s);
+    ctx.lineTo(Math.cos(a3) * s, Math.sin(a3) * s);
+    ctx.lineTo(Math.cos(a4) * s * 0.7, Math.sin(a4) * s * 0.7);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.save();
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.beginPath();
+  ctx.arc(0, 0, s * 0.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+};
+
+const potion: ShapeFn = (ctx, s) => {
+  ctx.fillRect(-s * 0.15, -s, s * 0.3, s * 0.4);
+  ctx.beginPath();
+  ctx.moveTo(-s * 0.15, -s * 0.6);
+  ctx.lineTo(-s * 0.5, s * 0.1);
+  ctx.quadraticCurveTo(-s * 0.55, s, 0, s);
+  ctx.quadraticCurveTo(s * 0.55, s, s * 0.5, s * 0.1);
+  ctx.lineTo(s * 0.15, -s * 0.6);
+  ctx.closePath();
+  ctx.fill();
+};
+
+const fire_breath: ShapeFn = (ctx, s) => {
+  ctx.beginPath();
+  ctx.moveTo(-s * 0.2, s * 0.5);
+  ctx.quadraticCurveTo(-s * 0.1, 0, -s * 0.6, -s * 0.3);
+  ctx.quadraticCurveTo(-s * 0.3, -s * 0.5, 0, -s);
+  ctx.quadraticCurveTo(s * 0.3, -s * 0.5, s * 0.6, -s * 0.3);
+  ctx.quadraticCurveTo(s * 0.1, 0, s * 0.2, s * 0.5);
+  ctx.quadraticCurveTo(0, s * 0.2, -s * 0.2, s * 0.5);
+  ctx.closePath();
+  ctx.fill();
+};
+
+const mask: ShapeFn = (ctx, s) => {
+  ctx.beginPath();
+  ctx.moveTo(0, -s * 0.7);
+  ctx.quadraticCurveTo(s * 0.8, -s * 0.7, s * 0.7, 0);
+  ctx.quadraticCurveTo(s * 0.6, s * 0.5, 0, s * 0.7);
+  ctx.quadraticCurveTo(-s * 0.6, s * 0.5, -s * 0.7, 0);
+  ctx.quadraticCurveTo(-s * 0.8, -s * 0.7, 0, -s * 0.7);
+  ctx.closePath();
+  ctx.fill();
+  ctx.save();
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.beginPath();
+  ctx.ellipse(-s * 0.28, -s * 0.1, s * 0.2, s * 0.12, -0.2, 0, Math.PI * 2);
+  ctx.ellipse(s * 0.28, -s * 0.1, s * 0.2, s * 0.12, 0.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+};
+
+const cherry_blossom: ShapeFn = (ctx, s) => {
+  for (let i = 0; i < 5; i++) {
+    const a = (i * 72 - 90) * (Math.PI / 180);
+    ctx.save();
+    ctx.rotate(a);
+    ctx.beginPath();
+    ctx.ellipse(0, -s * 0.55, s * 0.28, s * 0.45, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+  ctx.beginPath();
+  ctx.arc(0, 0, s * 0.15, 0, Math.PI * 2);
+  ctx.fill();
+};
+
+const dragon_head: ShapeFn = (ctx, s) => {
+  ctx.beginPath();
+  ctx.moveTo(-s * 0.3, s * 0.5);
+  ctx.quadraticCurveTo(-s * 0.6, s * 0.2, -s * 0.5, -s * 0.3);
+  ctx.lineTo(-s * 0.7, -s);
+  ctx.lineTo(-s * 0.3, -s * 0.5);
+  ctx.quadraticCurveTo(0, -s * 0.7, s * 0.3, -s * 0.4);
+  ctx.lineTo(s, -s * 0.1);
+  ctx.lineTo(s * 0.7, s * 0.1);
+  ctx.quadraticCurveTo(s * 0.3, s * 0.3, s * 0.2, s * 0.6);
+  ctx.quadraticCurveTo(0, s * 0.8, -s * 0.3, s * 0.5);
+  ctx.closePath();
+  ctx.fill();
+};
+
 export const SHAPE_REGISTRY: Record<string, ShapeFn> = {
-  lightning_bolt,
-  flame,
-  crescent,
-  bat,
-  star,
-  heart,
-  diamond,
-  crown,
-  skull,
-  leaf,
-  snowflake,
-  droplet,
-  music_note,
-  fist,
-  eye,
-  spiral,
-  arrow,
-  shield,
-  wing,
-  sword,
-  paw,
-  bolt,
-  circle,
-  cross,
-  snake,
+  lightning_bolt, flame, crescent, bat, star, heart, diamond, crown, skull,
+  leaf, snowflake, droplet, music_note, fist, eye, spiral, arrow, shield,
+  wing, sword, paw, bolt, circle, cross, snake,
+  claw_marks, batarang, kunai, shuriken, rocket, planet, car, football,
+  trophy, guitar, tree, moon, candy_cane, cowl, wave, anchor, feather,
+  gear, potion, fire_breath, mask, cherry_blossom, dragon_head,
 };
 
 export const VALID_SHAPE_IDS = Object.keys(SHAPE_REGISTRY);
@@ -371,6 +691,43 @@ export function drawThemedShape(
   ctx.shadowColor = '#FFFFFF';
   ctx.globalAlpha *= 0.5;
   fn(ctx, size * 0.7);
+
+  ctx.shadowBlur = 0;
+  ctx.restore();
+}
+
+/**
+ * Renders a pre-cached Path2D (from AI-generated SVG path d string).
+ * Paths are authored in a 48x48 viewBox; we scale to the target size.
+ */
+export function drawCustomSVGPath(
+  ctx: CanvasRenderingContext2D,
+  path2d: Path2D,
+  x: number,
+  y: number,
+  size: number,
+  rotation: number,
+  color: string,
+): void {
+  const scale = size / 24;
+
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rotation);
+  ctx.scale(scale, scale);
+  ctx.translate(-24, -24);
+
+  ctx.fillStyle = color;
+  ctx.strokeStyle = color;
+
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 18;
+  ctx.fill(path2d);
+
+  ctx.shadowBlur = 6;
+  ctx.shadowColor = '#FFFFFF';
+  ctx.globalAlpha *= 0.4;
+  ctx.fill(path2d);
 
   ctx.shadowBlur = 0;
   ctx.restore();

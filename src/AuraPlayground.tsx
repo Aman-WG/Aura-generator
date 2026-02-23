@@ -25,6 +25,7 @@ const ENERGY_META: Record<string, { emoji: string; label: string }> = {
 
 const LS_KEY_GEMINI = 'aura_gemini_key';
 const LS_KEY_OPENAI = 'aura_openai_key';
+const LS_KEY_PORTKEY = 'aura_portkey_key';
 const LS_KEY_PROVIDER = 'aura_provider';
 
 export function AuraPlayground() {
@@ -36,6 +37,7 @@ export function AuraPlayground() {
   );
   const [geminiKey, setGeminiKey] = useState(() => localStorage.getItem(LS_KEY_GEMINI) || '');
   const [openaiKey, setOpenaiKey] = useState(() => localStorage.getItem(LS_KEY_OPENAI) || '');
+  const [portkeyKey, setPortkeyKey] = useState(() => localStorage.getItem(LS_KEY_PORTKEY) || '');
   const [auraParams, setAuraParams] = useState<AuraParams | null>(null);
   const [loading, setLoading] = useState(false);
   const [lastResult, setLastResult] = useState<AuraGenerationResult | null>(null);
@@ -43,12 +45,25 @@ export function AuraPlayground() {
   const promptRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (geminiKey) localStorage.setItem(LS_KEY_GEMINI, geminiKey);
-    if (openaiKey) localStorage.setItem(LS_KEY_OPENAI, openaiKey);
+    if (geminiKey) {
+      localStorage.setItem(LS_KEY_GEMINI, geminiKey);
+    } else {
+      localStorage.removeItem(LS_KEY_GEMINI);
+    }
+    if (openaiKey) {
+      localStorage.setItem(LS_KEY_OPENAI, openaiKey);
+    } else {
+      localStorage.removeItem(LS_KEY_OPENAI);
+    }
+    if (portkeyKey) {
+      localStorage.setItem(LS_KEY_PORTKEY, portkeyKey);
+    } else {
+      localStorage.removeItem(LS_KEY_PORTKEY);
+    }
     localStorage.setItem(LS_KEY_PROVIDER, provider);
-  }, [geminiKey, openaiKey, provider]);
+  }, [geminiKey, openaiKey, portkeyKey, provider]);
 
-  const activeKey = provider === 'gemini' ? geminiKey : openaiKey;
+  const activeKey = provider === 'portkey' ? portkeyKey : provider === 'gemini' ? geminiKey : openaiKey;
 
   const handleGenerate = useCallback(async () => {
     if (!prompt.trim() && !element) return;
@@ -146,6 +161,20 @@ export function AuraPlayground() {
                 </span>
               </button>
               <button
+                onClick={() => setProvider('portkey')}
+                style={{
+                  ...styles.providerBtn,
+                  ...(provider === 'portkey' ? { ...styles.providerActive, borderColor: '#A855F7' } : {}),
+                }}
+              >
+                <span style={styles.providerIcon}>P</span>
+                <span>
+                  <strong>Portkey</strong>
+                  <br />
+                  <span style={{ ...styles.providerTag, background: '#7C3AED33', color: '#A855F7' }}>GEMINI 3</span>
+                </span>
+              </button>
+              <button
                 onClick={() => setProvider('openai')}
                 style={{
                   ...styles.providerBtn,
@@ -165,10 +194,42 @@ export function AuraPlayground() {
           {/* API Key */}
           <div style={styles.section}>
             <label style={styles.label}>
-              {provider === 'gemini' ? 'Gemini API Key' : 'OpenAI API Key'}
+              {provider === 'portkey' ? 'Portkey API Key' : provider === 'gemini' ? 'Gemini API Key' : 'OpenAI API Key'}
               {activeKey && <span style={styles.savedBadge}>SAVED</span>}
             </label>
-            {provider === 'gemini' ? (
+            {provider === 'portkey' ? (
+              <>
+                <div style={styles.keyRow}>
+                  <input
+                    type="password"
+                    value={portkeyKey}
+                    onChange={(e) => setPortkeyKey(e.target.value)}
+                    placeholder="Paste your Portkey API key here"
+                    style={{ ...styles.input, flex: 1 }}
+                  />
+                  {portkeyKey && (
+                    <button
+                      onClick={() => setPortkeyKey('')}
+                      style={styles.clearBtn}
+                      title="Clear key"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+                {portkeyKey && (
+                  <div style={{ marginTop: 4, marginBottom: 4 }}>
+                    <span style={{ color: '#888', fontSize: 12, fontFamily: 'monospace' }}>
+                      Key: {portkeyKey.slice(0, 8)}...{portkeyKey.slice(-4)}
+                    </span>
+                  </div>
+                )}
+                <p style={styles.hint}>
+                  Uses Gemini 3 Flash via Portkey gateway. Unlimited rate limits.
+                  {portkeyKey && ' Key auto-saved to browser.'}
+                </p>
+              </>
+            ) : provider === 'gemini' ? (
               <>
                 <div style={styles.keyRow}>
                   <input
@@ -188,6 +249,55 @@ export function AuraPlayground() {
                     </button>
                   )}
                 </div>
+
+                {geminiKey && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4, marginBottom: 4 }}>
+                    <span style={{ color: '#888', fontSize: 12, fontFamily: 'monospace' }}>
+                      Key: {geminiKey.slice(0, 10)}...{geminiKey.slice(-4)}
+                    </span>
+                    <button
+                      onClick={async () => {
+                        let msg = '';
+                        try {
+                          // Step 1: list models (no quota cost) to verify key is valid
+                          const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(geminiKey)}`;
+                          const listRes = await fetch(listUrl);
+                          if (!listRes.ok) {
+                            const t = await listRes.text();
+                            alert('KEY INVALID (HTTP ' + listRes.status + ')\n' + t.slice(0, 300));
+                            return;
+                          }
+                          const listData = await listRes.json();
+                          const modelNames = (listData.models || []).map((m: any) => m.name).filter((n: string) => n.includes('flash'));
+                          msg += 'KEY VALID! Found ' + modelNames.length + ' flash models:\n' + modelNames.slice(0, 6).join('\n') + '\n\n';
+
+                          // Step 2: try smallest possible generation
+                          const model = modelNames.find((n: string) => n.includes('2.5-flash')) || modelNames.find((n: string) => n.includes('2.0-flash')) || modelNames[0];
+                          if (!model) { alert(msg + 'No flash models available!'); return; }
+                          const shortName = model.replace('models/', '');
+                          const genUrl = `https://generativelanguage.googleapis.com/v1beta/${model}:generateContent?key=${encodeURIComponent(geminiKey)}`;
+                          const genRes = await fetch(genUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ contents: [{ parts: [{ text: 'Reply with just the word OK' }] }], generationConfig: { maxOutputTokens: 5 } }),
+                          });
+                          if (genRes.ok) {
+                            msg += 'GENERATION OK with ' + shortName + '!';
+                          } else {
+                            const t = await genRes.text();
+                            msg += 'Generation FAILED on ' + shortName + ' (HTTP ' + genRes.status + '):\n' + t.slice(0, 200);
+                          }
+                        } catch (e: any) {
+                          msg += 'Network error: ' + e.message;
+                        }
+                        alert(msg);
+                      }}
+                      style={{ ...styles.clearBtn, fontSize: 11, padding: '3px 8px', color: '#4fc3f7' }}
+                    >
+                      Test Key
+                    </button>
+                  </div>
+                )}
                 <p style={styles.hint}>
                   Get a free key at{' '}
                   <a
@@ -317,7 +427,7 @@ export function AuraPlayground() {
           )}
           {lastResult?.source === 'ai' && (
             <p style={styles.success}>
-              AI aura generated via {provider === 'gemini' ? 'Gemini 2.5 Flash' : 'GPT-4o-mini'}
+              AI aura generated via {provider === 'portkey' ? 'Gemini 3 Flash (Portkey)' : provider === 'gemini' ? 'Gemini 2.5 Flash' : 'GPT-4o-mini'}
               {latency ? ` in ${latency}ms` : ''}
             </p>
           )}
@@ -325,7 +435,7 @@ export function AuraPlayground() {
           {/* Security note */}
           {activeKey && (
             <p style={styles.securityNote}>
-              Your API key is stored in localStorage and sent directly to {provider === 'gemini' ? 'Google' : 'OpenAI'}'s API. 
+              Your API key is stored in localStorage and sent directly to {provider === 'portkey' ? 'Portkey' : provider === 'gemini' ? 'Google' : 'OpenAI'}'s API. 
               It never touches any third-party server. For production, route through a backend proxy.
             </p>
           )}

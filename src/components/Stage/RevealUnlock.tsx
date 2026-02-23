@@ -6,6 +6,7 @@ import { AuraCanvas } from './AuraCanvas';
 interface RevealUnlockProps {
   onEquip: () => void;
   onRetry: () => void;
+  onHover?: () => void;
   avatarImageUrl?: string;
   auraParams: AuraParams | null;
   auraError: AuraError | null;
@@ -21,7 +22,7 @@ const sparkles = Array.from({ length: SPARKLE_COUNT }, (_, i) => {
   return { angle, radius, size, delay, id: i };
 });
 
-export function RevealUnlock({ onEquip, onRetry, avatarImageUrl, auraParams, auraError }: RevealUnlockProps) {
+export function RevealUnlock({ onEquip, onRetry, onHover, avatarImageUrl, auraParams, auraError }: RevealUnlockProps) {
   const auraName = auraParams?.auraName;
   const isFallback = auraError?.source === 'fallback';
   return (
@@ -197,10 +198,10 @@ export function RevealUnlock({ onEquip, onRetry, avatarImageUrl, auraParams, aur
             damping: 18,
           }}
         >
-          <button className="pixel-btn" onClick={onEquip}>
+          <button className="pixel-btn" onClick={onEquip} onMouseEnter={onHover}>
             Equip Aura
           </button>
-          <button className="pixel-btn pixel-btn--ghost" onClick={onRetry}>
+          <button className="pixel-btn pixel-btn--ghost" onClick={onRetry} onMouseEnter={onHover}>
             Retry
           </button>
         </motion.div>

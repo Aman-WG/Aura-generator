@@ -35,6 +35,8 @@ export interface AuraParams {
     style: ParticleStyle;
     drift: ParticleDrift;
     shapes?: string[];
+    /** AI-generated SVG path `d` strings for detailed contextual particles (48x48 viewBox) */
+    customPaths?: Array<{ name: string; path: string }>;
   };
   lightning: {
     enabled: boolean;
@@ -61,7 +63,10 @@ export interface Particle {
   rotationSpeed: number;
   active: boolean;
   useSecondary: boolean;
+  /** Index into library shapes array (-1 = none) */
   shapeIdx: number;
+  /** Index into customPaths array (-1 = none) */
+  customPathIdx: number;
 }
 
 /** A point on the flame contour perimeter */

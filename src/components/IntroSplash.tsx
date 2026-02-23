@@ -1,13 +1,19 @@
+import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 
 interface IntroSplashProps {
   onComplete: () => void;
+  onSound?: () => void;
 }
 
 const HOLD_DURATION = 3800;
 const FADE_DURATION = 1200;
 
-export function IntroSplash({ onComplete }: IntroSplashProps) {
+export function IntroSplash({ onComplete, onSound }: IntroSplashProps) {
+  useEffect(() => {
+    const t = setTimeout(() => onSound?.(), 900);
+    return () => clearTimeout(t);
+  }, [onSound]);
   return (
     <motion.div
       className="intro-splash"

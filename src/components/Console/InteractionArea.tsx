@@ -28,6 +28,7 @@ interface InteractionAreaProps {
   onSelectElement: (element: string) => void;
   onSelectEnergy: (energy: string) => void;
   onGenerateAura: (chaos: string) => void;
+  onHover?: () => void;
 }
 
 const slideIn = {
@@ -44,6 +45,7 @@ export function InteractionArea({
   onSelectElement,
   onSelectEnergy,
   onGenerateAura,
+  onHover,
 }: InteractionAreaProps) {
   return (
     <div className="interaction-area">
@@ -54,6 +56,7 @@ export function InteractionArea({
             <motion.button
               className="pixel-btn pixel-btn--lg"
               onClick={onInitiate}
+              onMouseEnter={onHover}
               whileHover={{ scale: 1.06, y: -3 }}
               whileTap={{ scale: 0.94 }}
               transition={{ type: 'spring', stiffness: 400, damping: 15 }}
@@ -72,6 +75,7 @@ export function InteractionArea({
                   key={el.id}
                   className="pill-btn"
                   onClick={() => onSelectElement(el.id)}
+                  onMouseEnter={onHover}
                   whileHover={{ scale: 1.08, y: -2 }}
                   whileTap={{ scale: 0.94 }}
                   transition={{ type: 'spring', stiffness: 400, damping: 17 }}
@@ -93,6 +97,7 @@ export function InteractionArea({
                   key={ef.id}
                   className="pill-btn"
                   onClick={() => onSelectEnergy(ef.id)}
+                  onMouseEnter={onHover}
                   whileHover={{ scale: 1.08, y: -2 }}
                   whileTap={{ scale: 0.94 }}
                   transition={{ type: 'spring', stiffness: 400, damping: 17 }}
@@ -108,7 +113,7 @@ export function InteractionArea({
         {/* STEP 3: CHAOS INPUT + GENERATE */}
         {phase === PHASE.CHAOS_INPUT && isTypingComplete && (
           <motion.div key="chaos" className="interaction-area__content" {...slideIn}>
-            <ChaosInputUI onGenerate={onGenerateAura} />
+            <ChaosInputUI onGenerate={onGenerateAura} onHover={onHover} />
           </motion.div>
         )}
 
@@ -128,7 +133,7 @@ export function InteractionArea({
   );
 }
 
-function ChaosInputUI({ onGenerate }: { onGenerate: (chaos: string) => void }) {
+function ChaosInputUI({ onGenerate, onHover }: { onGenerate: (chaos: string) => void; onHover?: () => void }) {
   const [chaos, setChaos] = useState('');
 
   const wordCount = chaos.trim() ? chaos.trim().split(/\s+/).length : 0;
@@ -164,6 +169,7 @@ function ChaosInputUI({ onGenerate }: { onGenerate: (chaos: string) => void }) {
         <motion.button
           className="pixel-btn pixel-btn--sm"
           onClick={() => onGenerate(chaos.trim() || 'pure chaos')}
+          onMouseEnter={onHover}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           transition={{ type: 'spring', stiffness: 400, damping: 15 }}

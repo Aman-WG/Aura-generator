@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 interface UseTypewriterOptions {
   speed?: number;
   lineDelay?: number;
+  onChar?: () => void;
   onLineComplete?: (lineIndex: number) => void;
   onComplete?: () => void;
 }
@@ -21,9 +22,10 @@ export function useTypewriter(
 ) {
   const { speed = 35, lineDelay = 400 } = options;
 
-  // Store callbacks in refs so they don't cause effect re-runs
+  const onCharRef = useRef(options.onChar);
   const onLineCompleteRef = useRef(options.onLineComplete);
   const onCompleteRef = useRef(options.onComplete);
+  onCharRef.current = options.onChar;
   onLineCompleteRef.current = options.onLineComplete;
   onCompleteRef.current = options.onComplete;
 
@@ -85,6 +87,7 @@ export function useTypewriter(
         });
 
         charIndex++;
+        if (charIndex > 1) onCharRef.current?.();
 
         if (charIndex <= currentLine.length) {
           const jitter = Math.random() * 20 - 10;

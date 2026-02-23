@@ -17,6 +17,7 @@ interface StageProps {
   isGenerating: boolean;
   onEquipAura: () => void;
   onRetry: () => void;
+  onHover?: () => void;
   avatarImageUrl?: string;
   auraParams?: AuraParams | null;
   auraError?: AuraError | null;
@@ -28,7 +29,7 @@ const shakeKeyframes = {
   rotate: [0, -0.6, 0.6, -0.4, 0.3, -0.1, 0],
 };
 
-export function Stage({ phase, isShaking, scannerVisible, scannerFireTrigger, armsEntered, armFireTrigger, isGenerating, onEquipAura, onRetry, avatarImageUrl, auraParams, auraError }: StageProps) {
+export function Stage({ phase, isShaking, scannerVisible, scannerFireTrigger, armsEntered, armFireTrigger, isGenerating, onEquipAura, onRetry, onHover, avatarImageUrl, auraParams, auraError }: StageProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -82,18 +83,27 @@ export function Stage({ phase, isShaking, scannerVisible, scannerFireTrigger, ar
 
       <AnimatePresence>
         {isShaking && (
-          <motion.div
-            className="stage__flicker"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 0.7, 0, 0.5, 0, 0.8, 0, 0.3, 0] }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-          />
+          <>
+            <motion.div
+              className="stage__flicker"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: [0, 0.15, 0, 0.1, 0] }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+            />
+            <motion.div
+              className="stage__flashbang"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: [0, 0, 0, 0, 0.9, 0, 0, 0, 0.7, 0, 0, 1, 0] }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+            />
+          </>
         )}
       </AnimatePresence>
 
       <AnimatePresence>
-        {phase === PHASE.REVEAL && <RevealUnlock onEquip={onEquipAura} onRetry={onRetry} avatarImageUrl={avatarImageUrl} auraParams={auraParams ?? null} auraError={auraError ?? null} />}
+        {phase === PHASE.REVEAL && <RevealUnlock onEquip={onEquipAura} onRetry={onRetry} onHover={onHover} avatarImageUrl={avatarImageUrl} auraParams={auraParams ?? null} auraError={auraError ?? null} />}
       </AnimatePresence>
     </motion.div>
   );
