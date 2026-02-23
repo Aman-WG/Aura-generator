@@ -1,4 +1,7 @@
 export type { Phase } from '../constants/phases';
+import type { AuraParams } from '../aura-engine/types';
+
+export type { AuraParams };
 
 export interface AuraConfig {
   element: string | null;
@@ -22,6 +25,6 @@ export type ParentMessage =
 export type AuraMessage =
   | { type: 'aura:ready' }
   | { type: 'aura:phase-change'; payload: { phase: string } }
-  | { type: 'aura:equipped'; payload: { auraConfig: AuraConfig } }
+  | { type: 'aura:equipped'; payload: { auraConfig: AuraConfig; auraParams?: AuraParams } }
   | { type: 'aura:retry' }
   | { type: 'aura:close' };

@@ -1,0 +1,79 @@
+// ─────────────────────────────────────────────────────────────
+// Aura Engine — Type Definitions
+// ─────────────────────────────────────────────────────────────
+
+/** Structured output from the AI model — drives all visual layers */
+export interface AuraParams {
+  auraName: string;
+  innerGlow: {
+    color: string;
+    intensity: number;
+    radius: number;
+  };
+  outerGlow: {
+    color: string;
+    intensity: number;
+    radius: number;
+  };
+  flameContour: {
+    baseColor: string;
+    tipColor: string;
+    speed: number;
+    jaggedness: number;
+    smoothness: number;
+    height: number;
+    thickness: number;
+    dualLayer: boolean;
+    dualColor?: string;
+  };
+  particles: {
+    color: string;
+    secondaryColor?: string;
+    count: number;
+    size: number;
+    speed: number;
+    style: ParticleStyle;
+    drift: ParticleDrift;
+    shapes?: string[];
+  };
+  lightning: {
+    enabled: boolean;
+    color: string;
+    frequency: number;
+  };
+  intensity: number;
+}
+
+export type ParticleStyle = 'ember' | 'sparkle' | 'debris' | 'lightning' | 'bubble' | 'orb';
+export type ParticleDrift = 'rise' | 'spiral' | 'burst' | 'float';
+
+/** Internal particle state — pooled, never allocated in hot loop */
+export interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  alpha: number;
+  size: number;
+  life: number;
+  maxLife: number;
+  rotation: number;
+  rotationSpeed: number;
+  active: boolean;
+  useSecondary: boolean;
+  shapeIdx: number;
+}
+
+/** A point on the flame contour perimeter */
+export interface FlamePoint {
+  angle: number;
+  baseRadius: number;
+  noiseOffset: number;
+}
+
+/** A single lightning bolt segment chain */
+export interface LightningBolt {
+  segments: Array<{ x: number; y: number }>;
+  alpha: number;
+  life: number;
+}

@@ -19,7 +19,7 @@ The Aura Lab runs inside an iframe; the two apps communicate via `postMessage`.
 | --------------------- | ------------------------------------------------------- | -------------------------------------- |
 | `aura:ready`          | —                                                       | Iframe loaded, send avatar data now    |
 | `aura:phase-change`   | `{ phase: string }`                                     | User progressed to a new phase         |
-| `aura:equipped`       | `{ auraConfig: { element, energy, chaosPrompt } }`      | User clicked "Equip Aura"              |
+| `aura:equipped`       | `{ auraConfig: { element, energy, chaosPrompt }, auraParams?: AuraParams }` | User clicked "Equip Aura"              |
 | `aura:retry`          | —                                                       | User clicked "Retry"                   |
 | `aura:close`          | —                                                       | User wants to exit the lab             |
 
@@ -39,7 +39,7 @@ import html2canvas from 'html2canvas';
 // Point this at wherever the Aura Lab is deployed
 const AURA_LAB_URL = 'https://your-aura-lab.vercel.app';
 
-export function AuraLabModal({ open, onClose, avatarRef, avatarConfig }) {
+export function AuraLabModal({ open, onClose, onEquip, avatarRef, avatarConfig }) {
   const iframeRef = useRef(null);
   const [iframeReady, setIframeReady] = useState(false);
 
@@ -58,7 +58,8 @@ export function AuraLabModal({ open, onClose, avatarRef, avatarConfig }) {
 
         case 'aura:equipped':
           console.log('Aura equipped!', data.payload.auraConfig);
-          // TODO: store the aura config in your app state / backend
+          // Store BOTH auraConfig and auraParams — auraParams powers the canvas aura
+          onEquip(data.payload.auraConfig, data.payload.auraParams ?? null);
           onClose();
           break;
 
@@ -159,11 +160,13 @@ In the Q-bit Shop's `App.jsx`, add the modal and an "Enter Aura Lab" button:
 ```jsx
 import { useRef, useState } from 'react';
 import { AuraLabModal } from './components/AuraLabModal';
+import { AuraPreviewWidget } from './components/AuraPreviewWidget';
 // ... existing imports ...
 
 function App() {
   const avatarRef = useRef(null);          // ref to the avatar preview DOM node
   const [showAuraLab, setShowAuraLab] = useState(false);
+  const [equippedAura, setEquippedAura] = useState(null);
 
   // ... existing useAvatarState() hook, etc. ...
 
@@ -171,10 +174,12 @@ function App() {
     <>
       {/* ... existing shop UI ... */}
 
-      {/* Attach ref to the avatar preview container */}
-      <div ref={avatarRef}>
-        <AvatarPreview {/* ...existing props... */} />
-      </div>
+      {/* Avatar preview with equipped aura */}
+      <AuraPreviewWidget auraParams={equippedAura} width={300} height={400}>
+        <div ref={avatarRef}>
+          <AvatarPreview {/* ...existing props... */} />
+        </div>
+      </AuraPreviewWidget>
 
       {/* CTA button — place wherever makes sense in the UI */}
       <button onClick={() => setShowAuraLab(true)}>
@@ -185,6 +190,10 @@ function App() {
       <AuraLabModal
         open={showAuraLab}
         onClose={() => setShowAuraLab(false)}
+        onEquip={(config, params) => {
+          setEquippedAura(params);
+          // persist config + params to your backend if needed
+        }}
         avatarRef={avatarRef}
         avatarConfig={selections}
       />
@@ -215,6 +224,72 @@ Student opens Q-bit Shop
             └─ Aura Lab sends `aura:equipped` with the aura config
             └─ Shop receives it, closes the iframe, stores the result
 ```
+
+---
+
+## Rendering the Equipped Aura in the Shop
+
+After the student equips an aura, you'll have `auraParams` — a JSON object that
+drives the animated Canvas 2D aura. To render it around the avatar in the shop:
+
+### 1. Copy the aura engine into the shop project
+
+Copy these folders/files from the Aura Lab repo into your shop project:
+
+```
+src/aura-engine/          →  src/aura-engine/
+src/components/AuraPreviewWidget.tsx  →  src/components/AuraPreviewWidget.tsx
+```
+
+The `aura-engine/` folder is self-contained (no external deps beyond React).
+
+### 2. Store auraParams when equipping
+
+```jsx
+const [equippedAura, setEquippedAura] = useState(null);
+
+<AuraLabModal
+  open={showAuraLab}
+  onClose={() => setShowAuraLab(false)}
+  onEquip={(config, params) => {
+    setEquippedAura(params);     // store for rendering
+    saveToBackend(config, params); // persist if needed
+  }}
+  avatarRef={avatarRef}
+  avatarConfig={selections}
+/>
+```
+
+### 3. Wrap the avatar preview with AuraPreviewWidget
+
+```jsx
+import { AuraPreviewWidget } from './components/AuraPreviewWidget';
+
+{/* In the shop's avatar display area */}
+<AuraPreviewWidget
+  auraParams={equippedAura}
+  width={300}
+  height={400}
+>
+  <img
+    src={avatarImageUrl}
+    alt="Q-bit"
+    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+  />
+</AuraPreviewWidget>
+```
+
+The widget handles everything:
+- Renders two Canvas 2D layers (behind + in front of the children)
+- Auto-sizes the canvas 1.4× larger than the container so the aura extends naturally
+- If `auraParams` is `null`, renders children with no aura (no canvas overhead)
+- Performance-safe: 30fps cap, particle pooling, no `getImageData`
+
+### 4. Persisting auraParams
+
+`auraParams` is a plain JSON object (~1-2 KB). Store it however you store user
+preferences — localStorage, database, API, etc. When the student returns, pass
+the stored object back into `<AuraPreviewWidget auraParams={stored} />`.
 
 ---
 

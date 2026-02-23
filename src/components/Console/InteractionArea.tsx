@@ -52,13 +52,13 @@ export function InteractionArea({
         {phase === PHASE.IDLE && isTypingComplete && (
           <motion.div key="idle" className="interaction-area__content interaction-area__content--center" {...slideIn}>
             <motion.button
-              className="pixel-btn pixel-btn--sm"
+              className="pixel-btn pixel-btn--lg"
               onClick={onInitiate}
-              whileHover={{ scale: 1.06, y: -2 }}
+              whileHover={{ scale: 1.06, y: -3 }}
               whileTap={{ scale: 0.94 }}
               transition={{ type: 'spring', stiffness: 400, damping: 15 }}
             >
-              <span style={{ fontSize: '1.6em', lineHeight: 1 }}>☢</span> INITIATE AURA GENERATION <span style={{ fontSize: '1.6em', lineHeight: 1 }}>☢</span>
+              <span style={{ fontSize: '1.8em', lineHeight: 1 }}>☢</span> INITIATE AURA GENERATION <span style={{ fontSize: '1.8em', lineHeight: 1 }}>☢</span>
             </motion.button>
           </motion.div>
         )}

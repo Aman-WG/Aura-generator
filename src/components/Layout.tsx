@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { Stage } from './Stage';
 import { Console } from './Console';
@@ -9,6 +9,7 @@ import { useSynthesizer } from '../hooks/useSynthesizer';
 import { useBridge } from '../context/ParentBridgeContext';
 import { PHASE } from '../constants/phases';
 import { DIALOGUE } from '../constants/dialogue';
+import { generateAuraParams, getFallbackParams } from '../aura-engine/aura-ai';
 
 const CONSOLE_ENTRANCE_DELAY = 800;
 const TYPEWRITER_START_DELAY = 600;
@@ -109,6 +110,8 @@ export function Layout() {
     synth.setPhase(PHASE.CHAOS_INPUT);
   }, [play, synth]);
 
+  const aiAbortRef = useRef<AbortController | null>(null);
+
   const handleGenerateAura = useCallback((chaos: string) => {
     play('glitch');
     synth.setChaos(chaos);
@@ -116,7 +119,25 @@ export function Layout() {
     synth.setShaking(true);
     setIsGenerating(true);
 
-    setTimeout(() => {
+    aiAbortRef.current?.abort();
+    const abort = new AbortController();
+    aiAbortRef.current = abort;
+
+    const element = synth.auraConfig.element ?? 'energy';
+    const energy = synth.auraConfig.energy ?? 'surge';
+    const apiKey = localStorage.getItem('aura_gemini_key') ?? '';
+
+    const aiPromise = apiKey
+      ? generateAuraParams(element, energy, chaos, apiKey, 'gemini')
+      : Promise.resolve({ params: getFallbackParams(element), source: 'fallback' as const, error: undefined });
+
+    const timerPromise = new Promise<void>((r) => setTimeout(r, GENERATION_DURATION));
+
+    Promise.all([aiPromise, timerPromise]).then(([result]) => {
+      if (abort.signal.aborted) return;
+
+      synth.setAuraParams(result.params);
+      synth.setAuraError({ source: result.source, error: result.error });
       synth.setShaking(false);
       setIsGenerating(false);
       setScannerVisible(false);
@@ -125,13 +146,13 @@ export function Layout() {
       setTimeout(() => {
         synth.setPhase(PHASE.REVEAL);
       }, RETRACT_DURATION);
-    }, GENERATION_DURATION);
+    });
   }, [play, synth]);
 
   const handleEquipAura = useCallback(() => {
     play('click');
-    bridge.sendEquipped(synth.auraConfig);
-  }, [play, bridge, synth.auraConfig]);
+    bridge.sendEquipped(synth.auraConfig, synth.auraParams ?? undefined);
+  }, [play, bridge, synth.auraConfig, synth.auraParams]);
 
   const handleRetry = useCallback(() => {
     play('click');
@@ -169,6 +190,8 @@ export function Layout() {
             onEquipAura={handleEquipAura}
             onRetry={handleRetry}
             avatarImageUrl={bridge.avatarData?.avatarImageUrl}
+            auraParams={synth.auraParams}
+            auraError={synth.auraError}
           />
         </div>
 

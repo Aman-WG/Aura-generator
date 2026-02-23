@@ -1,6 +1,7 @@
 import { useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { Phase } from '../../types';
+import type { Phase, AuraParams } from '../../types';
+import type { AuraError } from '../../hooks/useSynthesizer';
 import { PHASE } from '../../constants/phases';
 import { RoboArm } from './RoboArm';
 import { ScannerScreen } from './ScannerScreen';
@@ -17,6 +18,8 @@ interface StageProps {
   onEquipAura: () => void;
   onRetry: () => void;
   avatarImageUrl?: string;
+  auraParams?: AuraParams | null;
+  auraError?: AuraError | null;
 }
 
 const shakeKeyframes = {
@@ -25,7 +28,7 @@ const shakeKeyframes = {
   rotate: [0, -0.6, 0.6, -0.4, 0.3, -0.1, 0],
 };
 
-export function Stage({ phase, isShaking, scannerVisible, scannerFireTrigger, armsEntered, armFireTrigger, isGenerating, onEquipAura, onRetry, avatarImageUrl }: StageProps) {
+export function Stage({ phase, isShaking, scannerVisible, scannerFireTrigger, armsEntered, armFireTrigger, isGenerating, onEquipAura, onRetry, avatarImageUrl, auraParams, auraError }: StageProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -90,7 +93,7 @@ export function Stage({ phase, isShaking, scannerVisible, scannerFireTrigger, ar
       </AnimatePresence>
 
       <AnimatePresence>
-        {phase === PHASE.REVEAL && <RevealUnlock onEquip={onEquipAura} onRetry={onRetry} avatarImageUrl={avatarImageUrl} />}
+        {phase === PHASE.REVEAL && <RevealUnlock onEquip={onEquipAura} onRetry={onRetry} avatarImageUrl={avatarImageUrl} auraParams={auraParams ?? null} auraError={auraError ?? null} />}
       </AnimatePresence>
     </motion.div>
   );

@@ -229,7 +229,6 @@
   z-index: 12;
   pointer-events: none;
 
-  /* 332.8:414 source aspect ratio preserved */
   width: 280px;
   height: 348px;
 
@@ -439,6 +438,30 @@
 @keyframes core-pulse {
   0% { transform: scale(1); opacity: 0.8; }
   100% { transform: scale(1.3); opacity: 1; }
+}
+
+/* ── Canvas Aura (replaces CSS rings when active) ───────────── */
+
+.aura-canvas-wrap {
+  position: absolute;
+  inset: -100px;
+  z-index: 1;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.aura-canvas-back,
+.aura-canvas-front {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.aura-canvas-front {
+  opacity: 0.18;
 }
 
 
@@ -730,6 +753,33 @@
 }
 
 
+/* Large variant for primary CTA */
+.pixel-btn--lg {
+  padding: 18px 48px;
+  font-size: 16px;
+  letter-spacing: 3px;
+  box-shadow:
+    -5px 0 0 0 #b89f00,
+    5px 0 0 0 #b89f00,
+    0 -5px 0 0 #b89f00,
+    0 5px 0 0 #b89f00,
+    0 0 24px rgba(255, 228, 48, 0.7),
+    0 0 60px rgba(255, 228, 48, 0.3),
+    0 0 120px rgba(255, 228, 48, 0.12);
+}
+
+.pixel-btn--lg:hover {
+  box-shadow:
+    -5px 0 0 0 #ccb300,
+    5px 0 0 0 #ccb300,
+    0 -5px 0 0 #ccb300,
+    0 5px 0 0 #ccb300,
+    0 0 32px rgba(255, 228, 48, 0.9),
+    0 0 80px rgba(255, 228, 48, 0.4),
+    0 0 140px rgba(255, 228, 48, 0.18);
+}
+
+
 /* Small variant for inline use */
 .pixel-btn--sm {
   padding: 9px 20px;
@@ -1010,6 +1060,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: visible;
 }
 
 /* Rotating light rays */
@@ -1094,12 +1145,12 @@
     inset 0 0 30px rgba(180, 74, 255, 0.08);
 }
 
-/* Character container */
+/* Character container — 80% scale so aura has breathing room within the mask */
 .reveal-unlock__character {
   position: relative;
   z-index: 3;
-  width: 260px;
-  height: 340px;
+  width: 208px;
+  height: 272px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1158,6 +1209,21 @@
     0 0 60px rgba(180, 74, 255, 0.4),
     0 0 120px rgba(180, 74, 255, 0.2),
     0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+.reveal-unlock__fallback-notice {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #ff9f43;
+  text-shadow: 0 0 8px rgba(255, 159, 67, 0.4);
+  padding: 6px 14px;
+  border: 1px solid rgba(255, 159, 67, 0.3);
+  border-radius: 6px;
+  background: rgba(255, 159, 67, 0.08);
+  max-width: 80%;
+  text-align: center;
+  line-height: 1.6;
 }
 
 .reveal-unlock__actions {

@@ -1,9 +1,14 @@
 import { motion } from 'framer-motion';
+import type { AuraParams } from '../../aura-engine/types';
+import type { AuraError } from '../../hooks/useSynthesizer';
+import { AuraCanvas } from './AuraCanvas';
 
 interface RevealUnlockProps {
   onEquip: () => void;
   onRetry: () => void;
   avatarImageUrl?: string;
+  auraParams: AuraParams | null;
+  auraError: AuraError | null;
 }
 
 const SPARKLE_COUNT = 14;
@@ -16,7 +21,9 @@ const sparkles = Array.from({ length: SPARKLE_COUNT }, (_, i) => {
   return { angle, radius, size, delay, id: i };
 });
 
-export function RevealUnlock({ onEquip, onRetry, avatarImageUrl }: RevealUnlockProps) {
+export function RevealUnlock({ onEquip, onRetry, avatarImageUrl, auraParams, auraError }: RevealUnlockProps) {
+  const auraName = auraParams?.auraName;
+  const isFallback = auraError?.source === 'fallback';
   return (
     <motion.div
       className="reveal-unlock"
@@ -59,27 +66,43 @@ export function RevealUnlock({ onEquip, onRetry, avatarImageUrl }: RevealUnlockP
           }}
         />
 
-        {/* Radial glow burst */}
-        <motion.div
-          className="reveal-unlock__glow"
-          initial={{ opacity: 0, scale: 0 }}
-          animate={{ opacity: [0, 1, 0.7], scale: [0, 1.6, 1.1] }}
-          transition={{ duration: 1, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-        />
+        {/* Radial glow burst — hidden when aura canvas provides its own */}
+        {!auraParams && (
+          <motion.div
+            className="reveal-unlock__glow"
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: [0, 1, 0.7], scale: [0, 1.6, 1.1] }}
+            transition={{ duration: 1, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          />
+        )}
 
-        {/* Pulsing glow ring */}
-        <motion.div
-          className="reveal-unlock__pulse-ring"
-          initial={{ opacity: 0, scale: 0.5 }}
-          animate={{ opacity: [0, 0.6, 0.3, 0.5, 0.3], scale: [0.5, 1, 1.05, 0.98, 1.02] }}
-          transition={{
-            delay: 0.8,
-            duration: 3,
-            repeat: Infinity,
-            repeatType: 'mirror',
-            ease: 'easeInOut',
-          }}
-        />
+        {/* Pulsing glow ring — hidden when aura canvas provides its own */}
+        {!auraParams && (
+          <motion.div
+            className="reveal-unlock__pulse-ring"
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: [0, 0.6, 0.3, 0.5, 0.3], scale: [0.5, 1, 1.05, 0.98, 1.02] }}
+            transition={{
+              delay: 0.8,
+              duration: 3,
+              repeat: Infinity,
+              repeatType: 'mirror',
+              ease: 'easeInOut',
+            }}
+          />
+        )}
+
+        {/* Aura canvas — scaled to match 80% character, still larger than container for soft fade */}
+        {auraParams && (
+          <AuraCanvas
+            params={auraParams}
+            width={460}
+            height={504}
+            frontOpacity={0.18}
+            backZIndex={1}
+            frontZIndex={4}
+          />
+        )}
 
         {/* Character image — the hero moment */}
         <motion.div
@@ -149,8 +172,19 @@ export function RevealUnlock({ onEquip, onRetry, avatarImageUrl }: RevealUnlockP
             damping: 16,
           }}
         >
-          Aura Generated Successfully
+          {auraName || 'Aura Generated Successfully'}
         </motion.div>
+
+        {isFallback && (
+          <motion.div
+            className="reveal-unlock__fallback-notice"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 2.0, duration: 0.5 }}
+          >
+            {auraError?.error || 'AI unavailable — showing element-based aura'}
+          </motion.div>
+        )}
 
         <motion.div
           className="reveal-unlock__actions"
