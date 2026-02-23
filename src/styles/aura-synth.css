@@ -1754,3 +1754,61 @@
   text-align: right;
   text-shadow: 0 0 4px rgba(0, 255, 65, 0.4);
 }
+
+.aura-modifiers__physics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.aura-modifiers__physics-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 5px 2px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  transition: all 0.15s;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.aura-modifiers__physics-btn:hover {
+  background: rgba(168, 85, 247, 0.1);
+  border-color: rgba(168, 85, 247, 0.3);
+}
+
+.aura-modifiers__physics-btn--active {
+  background: rgba(168, 85, 247, 0.15);
+  border-color: rgba(168, 85, 247, 0.5);
+  color: #D8B4FE;
+  box-shadow: 0 0 8px rgba(168, 85, 247, 0.2);
+}
+
+.aura-modifiers__physics-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.aura-modifiers__physics-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 5px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.aura-modifiers__nature-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.aura-modifiers__nature-end {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 6px;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 1px;
+  white-space: nowrap;
+}

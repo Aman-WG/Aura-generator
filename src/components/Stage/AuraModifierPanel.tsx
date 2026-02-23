@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import type { AuraParams } from '../../aura-engine/types';
+import type { AuraParams, EnergyFlowPattern } from '../../aura-engine/types';
 
 interface AuraModifierPanelProps {
   params: AuraParams;
@@ -8,105 +8,81 @@ interface AuraModifierPanelProps {
   onHover?: () => void;
 }
 
-interface SliderDef {
-  key: string;
-  label: string;
-  icon: string;
-  min: number;
-  max: number;
-  step: number;
-  get: (p: AuraParams) => number;
-  set: (p: AuraParams, v: number) => AuraParams;
-}
-
-const SLIDERS: SliderDef[] = [
-  {
-    key: 'speed',
-    label: 'Physics Speed',
-    icon: '⚡',
-    min: 0.1,
-    max: 3,
-    step: 0.1,
-    get: (p) => p.flameContour.speed,
-    set: (p, v) => ({
-      ...p,
-      flameContour: { ...p.flameContour, speed: v },
-      particles: { ...p.particles, speed: v },
-    }),
-  },
-  {
-    key: 'size',
-    label: 'Particle Size',
-    icon: '✦',
-    min: 1,
-    max: 12,
-    step: 0.5,
-    get: (p) => p.particles.size,
-    set: (p, v) => ({ ...p, particles: { ...p.particles, size: v } }),
-  },
-  {
-    key: 'chaos',
-    label: 'Chaos',
-    icon: '🌀',
-    min: 0,
-    max: 1,
-    step: 0.05,
-    get: (p) => p.flameContour.jaggedness,
-    set: (p, v) => ({
-      ...p,
-      flameContour: {
-        ...p.flameContour,
-        jaggedness: v,
-        smoothness: Math.max(0, 1 - v),
-      },
-    }),
-  },
-  {
-    key: 'intensity',
-    label: 'Intensity',
-    icon: '🔆',
-    min: 0.2,
-    max: 2,
-    step: 0.1,
-    get: (p) => p.intensity,
-    set: (p, v) => ({
-      ...p,
-      intensity: v,
-      innerGlow: { ...p.innerGlow, intensity: v },
-      outerGlow: { ...p.outerGlow, intensity: v * 0.7 },
-    }),
-  },
-  {
-    key: 'height',
-    label: 'Aura Height',
-    icon: '📐',
-    min: 0.3,
-    max: 2,
-    step: 0.1,
-    get: (p) => p.flameContour.height,
-    set: (p, v) => ({ ...p, flameContour: { ...p.flameContour, height: v } }),
-  },
+const PHYSICS_OPTIONS: Array<{ id: EnergyFlowPattern; label: string; icon: string }> = [
+  { id: 'spiral', label: 'Vortex', icon: '🌀' },
+  { id: 'rise', label: 'Rise Up', icon: '🔼' },
+  { id: 'radial-out', label: 'Explode', icon: '💥' },
+  { id: 'radial-in', label: 'Implode', icon: '🕳️' },
+  { id: 'cascade', label: 'Flow Down', icon: '🌊' },
+  { id: 'pulse', label: 'Pulse', icon: '💓' },
+  { id: 'zigzag', label: 'Zig Zag', icon: '⚡' },
+  { id: 'wave', label: 'Wave', icon: '〰️' },
 ];
 
 export function AuraModifierPanel({ params, onModify, onHover }: AuraModifierPanelProps) {
-  const [values, setValues] = useState<Record<string, number>>({});
+  const [physics, setPhysics] = useState<EnergyFlowPattern>(params.energyFlow?.pattern ?? 'radial-out');
+  const [nature, setNature] = useState(50);
+  const [speed, setSpeed] = useState(params.flameContour.speed);
+  const [particleSize, setParticleSize] = useState(params.particles.size);
 
   useEffect(() => {
-    const initial: Record<string, number> = {};
-    SLIDERS.forEach((s) => {
-      initial[s.key] = s.get(params);
-    });
-    setValues(initial);
+    setPhysics(params.energyFlow?.pattern ?? 'radial-out');
+    setSpeed(params.flameContour.speed);
+    setParticleSize(params.particles.size);
+    setNature(Math.round(params.flameContour.smoothness * 100));
   }, [params]);
 
-  const handleChange = useCallback(
-    (slider: SliderDef, val: number) => {
-      setValues((prev) => ({ ...prev, [slider.key]: val }));
-      const updated = slider.set(params, val);
-      onModify(updated);
+  const emit = useCallback(
+    (patch: Partial<{
+      physics: EnergyFlowPattern;
+      nature: number;
+      speed: number;
+      particleSize: number;
+    }>) => {
+      const p: AuraParams = JSON.parse(JSON.stringify(params));
+
+      const phys = patch.physics ?? physics;
+      const nat = patch.nature ?? nature;
+      const spd = patch.speed ?? speed;
+      const ps = patch.particleSize ?? particleSize;
+
+      p.energyFlow.pattern = phys;
+      p.energyFlow.speed = spd;
+
+      const t = nat / 100;
+      p.flameContour.smoothness = 0.05 + t * 0.9;
+      p.flameContour.jaggedness = 0.9 - t * 0.75;
+      p.flameContour.speed = spd;
+      p.particles.size = ps;
+
+      onModify(p);
     },
-    [params, onModify],
+    [params, physics, nature, speed, particleSize, onModify],
   );
+
+  const handlePhysics = (id: EnergyFlowPattern) => {
+    setPhysics(id);
+    emit({ physics: id });
+  };
+
+  const handleNature = (v: number) => {
+    setNature(v);
+    emit({ nature: v });
+  };
+
+  const handleSpeed = (v: number) => {
+    setSpeed(v);
+    emit({ speed: v });
+  };
+
+  const handleParticleSize = (v: number) => {
+    setParticleSize(v);
+    emit({ particleSize: v });
+  };
+
+  const naturePct = nature;
+  const speedPct = ((speed - 0.2) / 1.8) * 100;
+  const sizePct = ((particleSize - 0.5) / 5.5) * 100;
 
   return (
     <motion.div
@@ -118,33 +94,95 @@ export function AuraModifierPanel({ params, onModify, onHover }: AuraModifierPan
       <div className="aura-modifiers__title">AURA MODIFIERS</div>
 
       <div className="aura-modifiers__list">
-        {SLIDERS.map((s) => {
-          const val = values[s.key] ?? s.get(params);
-          const pct = ((val - s.min) / (s.max - s.min)) * 100;
+        {/* Physics buttons */}
+        <div className="aura-modifiers__item">
+          <label className="aura-modifiers__label">
+            <span className="aura-modifiers__icon">🌪️</span>
+            Physics
+          </label>
+          <div className="aura-modifiers__physics-grid">
+            {PHYSICS_OPTIONS.map((opt) => (
+              <button
+                key={opt.id}
+                className={`aura-modifiers__physics-btn${physics === opt.id ? ' aura-modifiers__physics-btn--active' : ''}`}
+                onClick={() => handlePhysics(opt.id)}
+                onMouseEnter={onHover}
+              >
+                <span className="aura-modifiers__physics-icon">{opt.icon}</span>
+                <span className="aura-modifiers__physics-label">{opt.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
 
-          return (
-            <div key={s.key} className="aura-modifiers__item">
-              <label className="aura-modifiers__label">
-                <span className="aura-modifiers__icon">{s.icon}</span>
-                {s.label}
-              </label>
-              <div className="aura-modifiers__slider-wrap">
-                <input
-                  type="range"
-                  className="aura-modifiers__slider"
-                  min={s.min}
-                  max={s.max}
-                  step={s.step}
-                  value={val}
-                  onChange={(e) => handleChange(s, parseFloat(e.target.value))}
-                  onMouseEnter={onHover}
-                  style={{ '--slider-pct': `${pct}%` } as React.CSSProperties}
-                />
-                <span className="aura-modifiers__value">{val.toFixed(1)}</span>
-              </div>
+        {/* Aura Nature */}
+        <div className="aura-modifiers__item">
+          <label className="aura-modifiers__label">
+            <span className="aura-modifiers__icon">🎭</span>
+            Aura Nature
+          </label>
+          <div className="aura-modifiers__nature-row">
+            <span className="aura-modifiers__nature-end">CHAOS</span>
+            <div className="aura-modifiers__slider-wrap">
+              <input
+                type="range"
+                className="aura-modifiers__slider"
+                min={0}
+                max={100}
+                step={1}
+                value={nature}
+                onChange={(e) => handleNature(parseInt(e.target.value))}
+                onMouseEnter={onHover}
+                style={{ '--slider-pct': `${naturePct}%` } as React.CSSProperties}
+              />
             </div>
-          );
-        })}
+            <span className="aura-modifiers__nature-end">CALM</span>
+          </div>
+        </div>
+
+        {/* Speed */}
+        <div className="aura-modifiers__item">
+          <label className="aura-modifiers__label">
+            <span className="aura-modifiers__icon">⚡</span>
+            Aura Speed
+          </label>
+          <div className="aura-modifiers__slider-wrap">
+            <input
+              type="range"
+              className="aura-modifiers__slider"
+              min={0.2}
+              max={2.0}
+              step={0.05}
+              value={speed}
+              onChange={(e) => handleSpeed(parseFloat(e.target.value))}
+              onMouseEnter={onHover}
+              style={{ '--slider-pct': `${speedPct}%` } as React.CSSProperties}
+            />
+            <span className="aura-modifiers__value">{speed.toFixed(1)}x</span>
+          </div>
+        </div>
+
+        {/* Particle Size */}
+        <div className="aura-modifiers__item">
+          <label className="aura-modifiers__label">
+            <span className="aura-modifiers__icon">✦</span>
+            Particle Size
+          </label>
+          <div className="aura-modifiers__slider-wrap">
+            <input
+              type="range"
+              className="aura-modifiers__slider"
+              min={0.5}
+              max={6}
+              step={0.1}
+              value={particleSize}
+              onChange={(e) => handleParticleSize(parseFloat(e.target.value))}
+              onMouseEnter={onHover}
+              style={{ '--slider-pct': `${sizePct}%` } as React.CSSProperties}
+            />
+            <span className="aura-modifiers__value">{particleSize.toFixed(1)}</span>
+          </div>
+        </div>
       </div>
     </motion.div>
   );
