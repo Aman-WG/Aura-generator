@@ -89,41 +89,47 @@ Intensity (0.3-1.0): How visible/prominent the flow effect is. Subtle for gentle
 
 Think about the prompt's PHYSICS — how would this energy actually move? Fire rises. Water cascades. Magic spirals. Power pulses. Use your intuition.
 
-GENERIC PARTICLE FALLBACK SHAPES:
-If your custom paths below fail, these library IDs are used as fallback. Pick 2-3 that vaguely relate: ${SHAPE_LIST}
+THEMATIC PARTICLE SHAPES (background ambient variety):
+Pick 2-3 shapes from this library that relate to the prompt subject for small ambient background particles.
+Available shape IDs: ${SHAPE_LIST}
 
-CUSTOM PARTICLE ILLUSTRATIONS (MOST IMPORTANT PART):
-You must generate EXACTLY 2 custom SVG path "d" strings.
-These particles are the SOUL of the aura — they float as glowing silhouettes and must be THE SINGLE MOST ICONIC object a person would think of when they hear the prompt.
+ELEMENTAL PARTICLE SHAPES (energy texture):
+Pick 1-2 shapes from these categories that match the aura's energy mood. These render as tiny ambient sparks/effects.
+- FIRE: flame, burning_splinter, fire_spark
+- ELECTRIC: lightning_bolt, electric_spark, plasma_orb
+- WATER/ICE: droplet, water_splash, ice_shard
+- DARK/SHADOW: shadow_wisp, crescent
+- NATURE: petal, vine_curl
+- LIGHT/HOLY: star, light_ray
 
-HOW TO CHOOSE WHAT TO DRAW:
-Ask yourself: "If I say this prompt out loud to someone, what is the FIRST physical object that pops into their head?"
-That is your first particle. For the second, ask: "What is ONE more object deeply tied to this subject that would make someone go 'oh that's definitely about [prompt]'?"
+★★★ HERO EMOJI PARTICLES — THE MOST IMPORTANT PART ★★★
+You MUST pick EXACTLY 2 emoji characters that are the most iconic, instantly recognizable symbols for the prompt. These render as LARGE glowing hero particles floating through the aura.
 
-Rules for choosing:
-- Pick only objects with a STRONG, OBVIOUS, UNMISTAKABLE connection to the prompt
-- The 2 objects must be DIFFERENT from each other (not two views of the same thing)
-- Pick CONCRETE physical objects, not abstract concepts
-- If the prompt is a character/person: think of their single most iconic item or body feature, and one more signature element
-- If the prompt is an object: draw that object itself, plus something tightly associated with it
-- If the prompt is a concept: draw the most universally recognized symbol for it, plus one more associated object
-- NEVER pick generic objects (stars, circles, swirls) unless the prompt is literally about them
+HOW TO PICK (think step by step):
+1. What is the #1 most universally recognized emoji for this subject?
+2. What is the #2 most iconic associated emoji?
 
-SVG PATH FORMAT (48x48 coordinate space, 0,0 = top-left, 48,48 = bottom-right):
-- Commands: M (moveTo), L (lineTo), C (cubic bezier), Q (quadratic bezier), A (arc), Z (close)
-- Use CURVES (C, Q) for organic/round shapes — L lines for angular mechanical shapes
-- Fill the FULL 48x48 space — small shapes are invisible as particles
-- Multiple sub-paths allowed: "M...Z M...Z" for compound shapes
-- Max 800 chars per path
-- Draw FILLED SILHOUETTES — these render as solid glowing shapes, not outlines
-- Ensure paths are CLOSED (end with Z)
+The emoji MUST be specific and on-theme. Examples of good picks:
+- Batman → 🦇 + 🌙    (bat + night moon)
+- Superman → 💪 + ⭐   (strength + star/super)  
+- Pikachu → ⚡ + 💛    (lightning + yellow heart)
+- Fire → 🔥 + 💥       (flame + explosion)
+- Pizza → 🍕 + 🧀      (pizza + cheese)
+- Wolf → 🐺 + 🌕       (wolf + full moon)
+- Guitar → 🎸 + 🎵     (guitar + music)
+- Ocean → 🌊 + 🐚      (wave + shell)
+- Dragon → 🐉 + 🔥     (dragon + fire)
+- Crown/King → 👑 + 💎  (crown + jewel)
+- Ninja → 🥷 + ⚔️      (ninja + swords)
+- Space → 🚀 + ⭐      (rocket + star)
+- Christmas → 🎄 + 🎅   (tree + santa)
+- Dinosaur → 🦖 + 🦴    (dino + bone)
 
-PATH DRAWING TECHNIQUE:
-- Start with the outer boundary of the object using M and curves
-- Add internal features as separate sub-paths (M...Z) for recognizable detail
-- For round objects: use C (cubic bezier) curves extensively
-- For angular objects: use L (lineTo) for edges
-- Center the shape around (24, 24) and extend close to the 0-48 edges
+RULES:
+- Pick emoji that EVERYONE would associate with the prompt
+- Prefer object/symbol emoji over face/person emoji (they read better as particles)
+- Each emoji must be a SINGLE character or emoji sequence
+- Do NOT pick generic emoji like ✨ or 💫 — be SPECIFIC to the prompt
 
 SAFETY:
 - NEVER include violent, sexual, drug-related, or inappropriate themes
@@ -155,10 +161,11 @@ OUTPUT THIS EXACT JSON:
     "speed": 0.5-2.0,
     "style": "ember"|"sparkle"|"debris"|"lightning"|"bubble"|"orb",
     "drift": "rise"|"spiral"|"burst"|"float",
-    "shapes": ["shape_id_1", "shape_id_2", "shape_id_3"],
+    "shapes": ["thematic_id_1", "thematic_id_2"],
+    "elementalShapes": ["elemental_id_1"],
+    "heroEmoji": ["🦇", "🌙"],
     "customPaths": [
-      { "name": "the_most_iconic_object_for_this_prompt", "path": "M... SVG path d string ...Z" },
-      { "name": "second_deeply_associated_object", "path": "M... SVG path d string ...Z" }
+      { "name": "optional_svg_shape", "path": "M... SVG path ...Z" }
     ]
   },
   "lightning": { "enabled": true/false, "color": "#hex", "frequency": 0.1-0.5 },
@@ -210,7 +217,16 @@ function sanitizeShapes(raw: unknown): string[] {
   return raw
     .map(String)
     .filter((id) => VALID_SHAPE_IDS.includes(id))
-    .slice(0, 5);
+    .slice(0, 3);
+}
+
+function sanitizeHeroEmoji(raw: unknown): [string, string] | undefined {
+  if (!Array.isArray(raw) || raw.length < 2) return undefined;
+  const a = String(raw[0]).trim();
+  const b = String(raw[1]).trim();
+  if (!a || !b || a.length > 10 || b.length > 10) return undefined;
+  console.log(`[AuraAI] Hero emoji: ${a} ${b}`);
+  return [a, b];
 }
 
 const SVG_PATH_CHARS = /^[MmLlHhVvCcSsQqTtAaZz0-9.,\s\-]+$/;
@@ -222,15 +238,17 @@ function sanitizeCustomPaths(
   const result: Array<{ name: string; path: string }> = [];
   for (const entry of raw) {
     if (!entry || typeof entry !== 'object') continue;
-    const name = String((entry as any).name || 'shape').slice(0, 40);
+    const name = String((entry as any).name || 'shape').slice(0, 60);
     const path = String((entry as any).path || '');
-    if (!path || path.length > 1200) continue;
+    if (!path || path.length > 2000) continue;
     if (!/^[Mm]/.test(path)) continue;
     if (!SVG_PATH_CHARS.test(path)) continue;
     try {
       new Path2D(path);
       result.push({ name, path });
-    } catch {
+      console.log(`[AuraAI] Custom path OK: "${name}" (${path.length} chars)`);
+    } catch (e) {
+      console.warn(`[AuraAI] Custom path FAILED: "${name}"`, e);
       continue;
     }
     if (result.length >= 2) break;
@@ -272,7 +290,9 @@ function sanitizeParams(raw: Record<string, unknown>): AuraParams {
       style: VALID_STYLES.includes(r.particles?.style) ? r.particles.style : 'ember',
       drift: VALID_DRIFTS.includes(r.particles?.drift) ? r.particles.drift : 'rise',
       shapes: sanitizeShapes(r.particles?.shapes),
+      elementalShapes: sanitizeShapes(r.particles?.elementalShapes),
       customPaths: sanitizeCustomPaths(r.particles?.customPaths),
+      heroEmoji: sanitizeHeroEmoji(r.particles?.heroEmoji),
     },
     lightning: {
       enabled: Boolean(r.lightning?.enabled),
@@ -296,7 +316,7 @@ export function getFallbackParams(element: string): AuraParams {
       innerGlow: { color: '#FF6600', intensity: 0.8, radius: 0.4 },
       outerGlow: { color: '#FF2200', intensity: 0.5, radius: 0.85 },
       flameContour: { baseColor: '#FF4500', tipColor: '#FFD700', speed: 1.2, jaggedness: 0.7, smoothness: 0.25, height: 1.2, thickness: 0.7, dualLayer: false },
-      particles: { color: '#FF6600', secondaryColor: '#FFD700', count: 35, size: 2.5, speed: 1.3, style: 'ember', drift: 'rise', shapes: ['flame', 'star'] },
+      particles: { color: '#FF6600', secondaryColor: '#FFD700', count: 35, size: 2.5, speed: 1.3, style: 'ember', drift: 'rise', shapes: ['flame', 'fire_breath'], elementalShapes: ['burning_splinter', 'fire_spark'], heroEmoji: ['🔥', '💥'] },
       lightning: { enabled: false, color: '#FFFFFF', frequency: 0.2 },
       energyFlow: { pattern: 'rise', speed: 1.2, intensity: 0.7 },
       intensity: 1.1,
@@ -306,7 +326,7 @@ export function getFallbackParams(element: string): AuraParams {
       innerGlow: { color: '#FFFFFF', intensity: 0.7, radius: 0.35 },
       outerGlow: { color: '#00D4FF', intensity: 0.5, radius: 0.9 },
       flameContour: { baseColor: '#00BFFF', tipColor: '#E0F8FF', speed: 0.7, jaggedness: 0.4, smoothness: 0.6, height: 0.9, thickness: 0.6, dualLayer: false },
-      particles: { color: '#B0E0FF', secondaryColor: '#FFFFFF', count: 30, size: 2, speed: 0.6, style: 'sparkle', drift: 'float', shapes: ['snowflake', 'diamond'] },
+      particles: { color: '#B0E0FF', secondaryColor: '#FFFFFF', count: 30, size: 2, speed: 0.6, style: 'sparkle', drift: 'float', shapes: ['snowflake', 'diamond'], elementalShapes: ['ice_shard'], heroEmoji: ['❄️', '🧊'] },
       lightning: { enabled: false, color: '#FFFFFF', frequency: 0.2 },
       energyFlow: { pattern: 'cascade', speed: 0.6, intensity: 0.5 },
       intensity: 0.9,
@@ -316,7 +336,7 @@ export function getFallbackParams(element: string): AuraParams {
       innerGlow: { color: '#9B00FF', intensity: 0.8, radius: 0.45 },
       outerGlow: { color: '#4B0082', intensity: 0.6, radius: 0.9 },
       flameContour: { baseColor: '#8B00FF', tipColor: '#FF00FF', speed: 1.0, jaggedness: 0.8, smoothness: 0.15, height: 1.3, thickness: 0.8, dualLayer: true, dualColor: '#1A0030' },
-      particles: { color: '#CC66FF', secondaryColor: '#FF00FF', count: 40, size: 2, speed: 0.8, style: 'orb', drift: 'spiral', shapes: ['eye', 'spiral'] },
+      particles: { color: '#CC66FF', secondaryColor: '#FF00FF', count: 40, size: 2, speed: 0.8, style: 'orb', drift: 'spiral', shapes: ['eye', 'skull'], elementalShapes: ['shadow_wisp'], heroEmoji: ['🔮', '👁️'] },
       lightning: { enabled: true, color: '#CC00FF', frequency: 0.15 },
       energyFlow: { pattern: 'radial-in', speed: 0.7, intensity: 0.8 },
       intensity: 1.2,
@@ -326,7 +346,7 @@ export function getFallbackParams(element: string): AuraParams {
       innerGlow: { color: '#FFFFFF', intensity: 0.9, radius: 0.35 },
       outerGlow: { color: '#FFD700', intensity: 0.6, radius: 0.85 },
       flameContour: { baseColor: '#FFD700', tipColor: '#FFFFFF', speed: 1.5, jaggedness: 0.9, smoothness: 0.1, height: 1.1, thickness: 0.6, dualLayer: false },
-      particles: { color: '#FFD700', secondaryColor: '#FFFFFF', count: 25, size: 2, speed: 1.5, style: 'lightning', drift: 'burst', shapes: ['lightning_bolt', 'bolt'] },
+      particles: { color: '#FFD700', secondaryColor: '#FFFFFF', count: 25, size: 2, speed: 1.5, style: 'lightning', drift: 'burst', shapes: ['lightning_bolt', 'bolt'], elementalShapes: ['electric_spark'], heroEmoji: ['⚡', '🌩️'] },
       lightning: { enabled: true, color: '#FFD700', frequency: 0.35 },
       energyFlow: { pattern: 'radial-out', speed: 1.5, intensity: 0.8 },
       intensity: 1.3,
@@ -336,7 +356,7 @@ export function getFallbackParams(element: string): AuraParams {
       innerGlow: { color: '#88FF88', intensity: 0.6, radius: 0.4 },
       outerGlow: { color: '#00AA44', intensity: 0.4, radius: 0.85 },
       flameContour: { baseColor: '#00FF88', tipColor: '#CCFF66', speed: 0.8, jaggedness: 0.35, smoothness: 0.7, height: 0.8, thickness: 0.7, dualLayer: false },
-      particles: { color: '#66FF66', secondaryColor: '#FFFF00', count: 30, size: 3, speed: 0.7, style: 'sparkle', drift: 'float', shapes: ['leaf', 'droplet'] },
+      particles: { color: '#66FF66', secondaryColor: '#FFFF00', count: 30, size: 3, speed: 0.7, style: 'sparkle', drift: 'float', shapes: ['leaf', 'cherry_blossom'], elementalShapes: ['petal'], heroEmoji: ['🌿', '🌸'] },
       lightning: { enabled: false, color: '#FFFFFF', frequency: 0.2 },
       energyFlow: { pattern: 'pulse', speed: 0.6, intensity: 0.5 },
       intensity: 0.85,
@@ -378,7 +398,7 @@ async function callGeminiWithModel(
     ],
     generationConfig: {
       temperature: 0.9,
-      maxOutputTokens: 4096,
+      maxOutputTokens: 8192,
     },
   };
 
@@ -454,7 +474,7 @@ async function callOpenAI(apiKey: string, element: string, energy: string, promp
     body: JSON.stringify({
       model: 'gpt-4o-mini',
       temperature: 0.8,
-      max_tokens: 3000,
+      max_tokens: 8000,
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: buildUserMessage(element, energy, prompt) },
@@ -489,7 +509,7 @@ async function callPortkey(apiKey: string, element: string, energy: string, prom
     body: JSON.stringify({
       model: PORTKEY_MODEL,
       temperature: 0.9,
-      max_tokens: 4096,
+      max_tokens: 8192,
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: buildUserMessage(element, energy, prompt) },

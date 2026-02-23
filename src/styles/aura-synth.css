@@ -1042,7 +1042,7 @@
   inset: 0;
   z-index: 55;
   pointer-events: none;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* Dark cinematic dim — extra dark so aura pops */
@@ -1090,19 +1090,21 @@
 
 .reveal-unlock__character-area {
   position: relative;
-  width: 320px;
-  height: 340px;
+  width: 380px;
+  height: 420px;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: visible;
+  pointer-events: none;
 }
 
-/* Rotating light rays */
+/* Rotating light rays — purely decorative, must not block interaction */
 .reveal-unlock__rays {
   position: absolute;
   width: 200%;
   height: 200%;
+  pointer-events: none;
   background: conic-gradient(
     from 0deg,
     transparent 0deg,
@@ -1158,6 +1160,7 @@
   width: 110%;
   height: 110%;
   border-radius: 50%;
+  pointer-events: none;
   background: radial-gradient(
     circle,
     rgba(180, 74, 255, 0.4) 0%,
@@ -1174,6 +1177,7 @@
   width: 78%;
   height: 78%;
   border-radius: 50%;
+  pointer-events: none;
   border: 2px solid rgba(180, 74, 255, 0.35);
   box-shadow:
     0 0 30px rgba(180, 74, 255, 0.25),
@@ -1716,13 +1720,19 @@
   border-radius: 2px;
   background: linear-gradient(
     to right,
-    #00ff41 0%,
-    #00ff41 var(--slider-pct, 50%),
-    rgba(255, 255, 255, 0.12) var(--slider-pct, 50%),
-    rgba(255, 255, 255, 0.12) 100%
+    rgba(0, 255, 65, 0.7) 0%,
+    rgba(0, 255, 65, 0.7) var(--slider-pct, 50%),
+    rgba(255, 255, 255, 0.18) var(--slider-pct, 50%),
+    rgba(255, 255, 255, 0.18) 100%
   );
   outline: none;
   cursor: pointer;
+  padding: 8px 0;
+  margin: -8px 0;
+  background-clip: content-box;
+  position: relative;
+  z-index: 5;
+  touch-action: none;
 }
 
 .aura-modifiers__slider::-webkit-slider-thumb {
@@ -1731,9 +1741,15 @@
   height: 14px;
   border-radius: 50%;
   background: #00ff41;
-  box-shadow: 0 0 8px rgba(0, 255, 65, 0.6), 0 0 20px rgba(0, 255, 65, 0.2);
-  cursor: pointer;
-  border: 2px solid rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 4px rgba(0, 255, 65, 0.5);
+  cursor: grab;
+  border: 1.5px solid rgba(0, 0, 0, 0.4);
+  transition: box-shadow 0.15s ease;
+}
+
+.aura-modifiers__slider::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  box-shadow: 0 0 8px rgba(0, 255, 65, 0.7);
 }
 
 .aura-modifiers__slider::-moz-range-thumb {
@@ -1741,9 +1757,14 @@
   height: 14px;
   border-radius: 50%;
   background: #00ff41;
-  box-shadow: 0 0 8px rgba(0, 255, 65, 0.6), 0 0 20px rgba(0, 255, 65, 0.2);
-  cursor: pointer;
-  border: 2px solid rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 4px rgba(0, 255, 65, 0.5);
+  cursor: grab;
+  border: 1.5px solid rgba(0, 0, 0, 0.4);
+}
+
+.aura-modifiers__slider::-moz-range-thumb:active {
+  cursor: grabbing;
+  box-shadow: 0 0 8px rgba(0, 255, 65, 0.7);
 }
 
 .aura-modifiers__value {

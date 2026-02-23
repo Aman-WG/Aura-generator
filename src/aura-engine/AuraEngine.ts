@@ -64,11 +64,15 @@ export class AuraEngine {
   // ── Public API ──────────────────────────────────────────────
 
   setParams(params: AuraParams): void {
+    const isNewAura = !this.params ||
+      params.flameContour.baseColor !== this.params.flameContour.baseColor;
     this.params = params;
     this.innerGrad = null;
     this.outerGrad = null;
-    this.resetParticles();
-    this.buildCustomPaths();
+    if (isNewAura) {
+      this.resetParticles();
+      this.buildCustomPaths();
+    }
   }
 
   private buildCustomPaths(): void {
@@ -140,7 +144,7 @@ export class AuraEngine {
         x: 0, y: 0, vx: 0, vy: 0,
         alpha: 0, size: 0, life: 0, maxLife: 0,
         rotation: 0, rotationSpeed: 0, active: false,
-        useSecondary: false, shapeIdx: -1, customPathIdx: -1,
+        useSecondary: false, shapeIdx: -1, elementalShapeIdx: -1, customPathIdx: -1, emojiIdx: -1,
       });
     }
   }
@@ -206,14 +210,14 @@ export class AuraEngine {
     const f = this.params.flameContour;
     const intensity = this.params.intensity;
 
-    // Approximate outer flame edge radius, accounting for smoothness size compensation
+    // Approximate outer flame edge radius — matches buildFlamePoints
     const sm = f.smoothness;
     const sizeComp = 1.0 + sm * 0.25 * (1.0 - f.jaggedness * 0.5);
-    const auraRx = this.w * 0.194 * f.thickness * intensity * sizeComp * (1 + f.jaggedness * 0.75) * (1 + f.height * 0.3);
-    const auraRy = this.h * 0.219 * intensity * sizeComp * f.height * (1 + f.jaggedness * 0.75);
-    // Kill distance: 1.5x the aura edge
-    const killRx = auraRx * 1.5;
-    const killRy = auraRy * 1.5;
+    const auraRx = Math.min(this.w * 0.22 * f.thickness * intensity * sizeComp * (1 + f.jaggedness * 0.4), this.w * 0.30);
+    const auraRy = Math.min(this.h * 0.24 * intensity * sizeComp * f.height * (1 + f.jaggedness * 0.4), this.h * 0.32);
+    // Kill distance: at the aura edge (particles must not escape)
+    const killRx = auraRx * 1.15;
+    const killRy = auraRy * 1.15;
 
     let activeCount = 0;
     for (const pt of this.particles) {
@@ -230,7 +234,7 @@ export class AuraEngine {
         let alpha = lifeRatio > 0.7 ? (1 - lifeRatio) / 0.3 : lifeRatio > 0.2 ? 1.0 : lifeRatio / 0.2;
         alpha *= 0.8;
 
-        // Distance-based fade: full inside aura, ease-out to 0 at 1.5x edge
+        // Distance-based fade: smooth fade starting at 60% of aura edge, dead at 100%
         const dx = pt.x - this.cx;
         const dy = pt.y - this.cy;
         const dist = Math.sqrt((dx * dx) / (killRx * killRx) + (dy * dy) / (killRy * killRy));
@@ -238,24 +242,88 @@ export class AuraEngine {
           pt.active = false;
           continue;
         }
-        // Fade begins at the aura edge (dist ~0.667 of kill zone = 1/1.5)
-        const edgeNorm = 1 / 1.5;
-        if (dist > edgeNorm) {
-          const t = (dist - edgeNorm) / (1.0 - edgeNorm);
-          alpha *= 1.0 - t * t; // ease-out: fast start, gentle tail
+        // Fade begins at 60% of aura boundary → fully faded at 100%
+        const fadeStart = 0.55;
+        if (dist > fadeStart) {
+          const t = (dist - fadeStart) / (1.0 - fadeStart);
+          alpha *= 1.0 - t * t;
         }
 
         pt.alpha = alpha;
 
-        pt.x += pt.vx * dt * speed * 20;
-        pt.y += pt.vy * dt * speed * 20;
-        pt.rotation += pt.rotationSpeed * dt;
+        // HEAVY physics-driven particle movement — exaggerated per pattern
+        const ef = this.params.energyFlow;
+        const pattern = ef?.pattern ?? 'radial-out';
 
-        if (p.drift === 'spiral') {
-          const angle = Math.atan2(pt.y - this.cy, pt.x - this.cx);
-          pt.vx += Math.cos(angle + Math.PI / 2) * 0.02;
-          pt.vy += Math.sin(angle + Math.PI / 2) * 0.02;
+        const pdx = pt.x - this.cx;
+        const pdy = pt.y - this.cy;
+        const pAngle = Math.atan2(pdy, pdx);
+        const pDist = Math.sqrt(pdx * pdx + pdy * pdy) + 1;
+        const normDx = pdx / pDist;
+        const normDy = pdy / pDist;
+
+        switch (pattern) {
+          case 'spiral': {
+            // Strong tangential + slight outward = visible vortex spin
+            const tangX = Math.cos(pAngle + Math.PI * 0.5);
+            const tangY = Math.sin(pAngle + Math.PI * 0.5);
+            pt.vx += tangX * 0.55 + normDx * 0.08;
+            pt.vy += tangY * 0.55 + normDy * 0.08;
+            pt.rotation += 2.5 * dt;
+            break;
+          }
+          case 'rise': {
+            pt.vy -= 0.7;
+            pt.vx += (Math.random() - 0.5) * 0.15;
+            pt.vx *= 0.92;
+            break;
+          }
+          case 'radial-out': {
+            pt.vx += normDx * 0.45;
+            pt.vy += normDy * 0.45;
+            break;
+          }
+          case 'radial-in': {
+            pt.vx -= normDx * 0.4;
+            pt.vy -= normDy * 0.4;
+            // Orbit slightly to avoid collapsing to a point
+            pt.vx += Math.cos(pAngle + Math.PI * 0.5) * 0.1;
+            pt.vy += Math.sin(pAngle + Math.PI * 0.5) * 0.1;
+            break;
+          }
+          case 'cascade': {
+            pt.vy += 0.6;
+            pt.vx += Math.sin(this.time * 3 + pt.x * 0.02) * 0.15;
+            break;
+          }
+          case 'pulse': {
+            const breath = Math.sin(this.time * 3.0);
+            const pulseF = breath * 0.6;
+            pt.vx += normDx * pulseF;
+            pt.vy += normDy * pulseF;
+            break;
+          }
+          case 'zigzag': {
+            const zig = Math.sin(this.time * 5 + pt.y * 0.04);
+            pt.vx += zig * 0.7;
+            pt.vy -= 0.35;
+            break;
+          }
+          case 'wave': {
+            const w = Math.sin(this.time * 2.5 + pt.y * 0.03);
+            pt.vx += w * 0.55;
+            pt.vy += Math.cos(this.time * 1.5 + pt.x * 0.02) * 0.15;
+            break;
+          }
         }
+
+        // Damping — enough to keep control but not kill the motion
+        pt.vx *= 0.94;
+        pt.vy *= 0.94;
+
+        pt.x += pt.vx * dt * speed * 25;
+        pt.y += pt.vy * dt * speed * 25;
+        pt.rotation += pt.rotationSpeed * dt;
       }
     }
 
@@ -285,60 +353,129 @@ export class AuraEngine {
     pt.rotation = Math.random() * TAU;
     pt.useSecondary = Boolean(p.secondaryColor) && Math.random() > 0.5;
     pt.shapeIdx = -1;
+    pt.elementalShapeIdx = -1;
     pt.customPathIdx = -1;
+    pt.emojiIdx = -1;
 
     const shapes = p.shapes;
+    const elemental = p.elementalShapes;
+    const heroEmoji = p.heroEmoji;
+    const hasEmoji = heroEmoji && heroEmoji.length >= 2;
     const hasShapes = shapes && shapes.length > 0;
+    const hasElemental = elemental && elemental.length > 0;
     const hasCustom = this.customPath2Ds.length > 0;
     const roll = Math.random();
 
-    if (hasCustom && roll < 0.6) {
+    // Emoji-first: emoji (55%) → custom SVG (10%) → elemental (15%) → thematic (10%) → generic (10%)
+    const emojiEnd = hasEmoji ? 0.55 : 0;
+    const customEnd = emojiEnd + (hasCustom ? 0.10 : 0);
+    const elementalEnd = customEnd + (hasElemental ? 0.15 : 0);
+    const thematicEnd = elementalEnd + (hasShapes ? 0.10 : 0);
+
+    if (roll < emojiEnd) {
+      pt.emojiIdx = Math.floor(Math.random() * 2);
+      pt.size = p.size * (7.0 + Math.random() * 4.0);
+      pt.maxLife = 4.5 + Math.random() * 3.0;
+      pt.rotationSpeed = (Math.random() - 0.5) * 0.08;
+    } else if (roll < customEnd) {
       pt.customPathIdx = Math.floor(Math.random() * this.customPath2Ds.length);
-      pt.size = p.size * (5.0 + Math.random() * 3.0);
+      pt.size = p.size * (6.0 + Math.random() * 4.0);
       pt.maxLife = 3.5 + Math.random() * 2.5;
-      pt.rotationSpeed = (Math.random() - 0.5) * 0.3;
-    } else if (hasShapes && roll < (hasCustom ? 0.8 : 0.60)) {
+      pt.rotationSpeed = (Math.random() - 0.5) * 0.15;
+    } else if (roll < elementalEnd) {
+      pt.elementalShapeIdx = Math.floor(Math.random() * elemental!.length);
+      pt.size = p.size * (1.5 + Math.random() * 1.5);
+      pt.maxLife = 1.5 + Math.random() * 1.5;
+      pt.rotationSpeed = (Math.random() - 0.5) * 1.5;
+    } else if (roll < thematicEnd) {
       pt.shapeIdx = Math.floor(Math.random() * shapes!.length);
-      pt.size = p.size * (3.5 + Math.random() * 2.5);
-      pt.maxLife = 2.5 + Math.random() * 2.0;
+      pt.size = p.size * (2.5 + Math.random() * 2.0);
+      pt.maxLife = 2.0 + Math.random() * 2.0;
       pt.rotationSpeed = (Math.random() - 0.5) * 0.8;
     } else {
-      pt.size = p.size * (0.6 + Math.random() * 0.8);
-      pt.maxLife = 1.5 + Math.random() * 2.5;
+      pt.size = p.size * (0.5 + Math.random() * 0.6);
+      pt.maxLife = 1.2 + Math.random() * 2.0;
       pt.rotationSpeed = (Math.random() - 0.5) * 2;
     }
     pt.life = pt.maxLife;
 
-    switch (drift) {
-      case 'rise':
-        pt.x = this.cx + (Math.random() - 0.5) * spread;
-        pt.y = this.cy + Math.random() * this.h * 0.15;
+    // Spawn position & initial velocity driven by the PHYSICS MODE, not by AI drift
+    const physPattern = this.params.energyFlow?.pattern ?? 'radial-out';
+
+    switch (physPattern) {
+      case 'spiral': {
+        const a = Math.random() * TAU;
+        const r = 15 + Math.random() * spread * 0.35;
+        pt.x = this.cx + Math.cos(a) * r;
+        pt.y = this.cy + Math.sin(a) * r;
+        pt.vx = Math.cos(a + Math.PI * 0.5) * 2.0;
+        pt.vy = Math.sin(a + Math.PI * 0.5) * 2.0;
+        break;
+      }
+      case 'rise': {
+        pt.x = this.cx + (Math.random() - 0.5) * spread * 0.8;
+        pt.y = this.cy + spread * 0.2 + Math.random() * spread * 0.15;
+        pt.vx = (Math.random() - 0.5) * 0.4;
+        pt.vy = -(2.5 + Math.random() * 2.0);
+        break;
+      }
+      case 'radial-out': {
+        const a = Math.random() * TAU;
+        const r = 10 + Math.random() * 20;
+        pt.x = this.cx + Math.cos(a) * r;
+        pt.y = this.cy + Math.sin(a) * r;
+        const spd = 2.0 + Math.random() * 2.5;
+        pt.vx = Math.cos(a) * spd;
+        pt.vy = Math.sin(a) * spd;
+        break;
+      }
+      case 'radial-in': {
+        const a = Math.random() * TAU;
+        const r = spread * 0.6 + Math.random() * spread * 0.3;
+        pt.x = this.cx + Math.cos(a) * r;
+        pt.y = this.cy + Math.sin(a) * r;
+        const spd = 1.5 + Math.random() * 1.5;
+        pt.vx = -Math.cos(a) * spd;
+        pt.vy = -Math.sin(a) * spd;
+        break;
+      }
+      case 'cascade': {
+        pt.x = this.cx + (Math.random() - 0.5) * spread * 0.8;
+        pt.y = this.cy - spread * 0.3 - Math.random() * spread * 0.15;
         pt.vx = (Math.random() - 0.5) * 0.5;
-        pt.vy = -(1.5 + Math.random() * 2.0);
+        pt.vy = 1.5 + Math.random() * 2.5;
         break;
-      case 'spiral':
-        const angle = Math.random() * TAU;
-        const radius = 20 + Math.random() * spread * 0.4;
-        pt.x = this.cx + Math.cos(angle) * radius;
-        pt.y = this.cy + Math.sin(angle) * radius;
-        pt.vx = Math.cos(angle + Math.PI / 2) * 1.0;
-        pt.vy = Math.sin(angle + Math.PI / 2) * 1.0 - 0.5;
+      }
+      case 'pulse': {
+        const a = Math.random() * TAU;
+        const r = 15 + Math.random() * spread * 0.3;
+        pt.x = this.cx + Math.cos(a) * r;
+        pt.y = this.cy + Math.sin(a) * r;
+        pt.vx = 0;
+        pt.vy = 0;
         break;
-      case 'burst':
-        const burstAngle = Math.random() * TAU;
-        pt.x = this.cx;
-        pt.y = this.cy;
-        const burstSpeed = 1.5 + Math.random() * 2.5;
-        pt.vx = Math.cos(burstAngle) * burstSpeed;
-        pt.vy = Math.sin(burstAngle) * burstSpeed - 0.5;
+      }
+      case 'zigzag': {
+        pt.x = this.cx + (Math.random() - 0.5) * spread * 0.6;
+        pt.y = this.cy + spread * 0.15 + Math.random() * spread * 0.1;
+        pt.vx = (Math.random() > 0.5 ? 2.0 : -2.0) + (Math.random() - 0.5);
+        pt.vy = -(1.5 + Math.random() * 1.5);
         break;
-      case 'float':
-      default:
-        pt.x = this.cx + (Math.random() - 0.5) * spread * 1.5;
+      }
+      case 'wave': {
+        pt.x = this.cx + (Math.random() - 0.5) * spread;
+        pt.y = this.cy + (Math.random() - 0.5) * spread * 0.5;
+        pt.vx = Math.sin(this.time + pt.y * 0.05) * 2.0;
+        pt.vy = (Math.random() - 0.5) * 0.8;
+        break;
+      }
+      default: {
+        pt.x = this.cx + (Math.random() - 0.5) * spread;
         pt.y = this.cy + (Math.random() - 0.5) * this.h * 0.3;
         pt.vx = (Math.random() - 0.5) * 0.6;
         pt.vy = -(0.3 + Math.random() * 0.8);
         break;
+      }
     }
   }
 
@@ -386,6 +523,39 @@ export class AuraEngine {
     this.drawParticles(ctx);
     this.drawLightning(ctx);
 
+    // Soft radial vignette: fade everything to zero before reaching canvas edges.
+    // This eliminates any hard rectangular clip at the canvas boundary.
+    this.drawVignette(ctx);
+  }
+
+  /**
+   * Radial vignette using destination-in compositing.
+   * Draws an elliptical alpha mask that is fully opaque in the center
+   * and fades to zero at ~85% canvas radius, guaranteeing no visible
+   * content touches the canvas edge.
+   */
+  private drawVignette(ctx: CanvasRenderingContext2D): void {
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-in';
+    ctx.globalAlpha = 1.0;
+    // Large enough that the flame contour (max 0.32h) is fully inside the opaque zone.
+    // Fade only catches glow bleed near canvas edges, never the flame tips.
+    const rx = this.w * 0.70;
+    const ry = this.h * 0.70;
+    const grad = ctx.createRadialGradient(
+      this.cx, this.cy, 0,
+      this.cx, this.cy, Math.max(rx, ry),
+    );
+    grad.addColorStop(0, '#FFFFFF');
+    grad.addColorStop(0.72, '#FFFFFF');
+    grad.addColorStop(0.86, 'rgba(255,255,255,0.5)');
+    grad.addColorStop(0.95, 'rgba(255,255,255,0.1)');
+    grad.addColorStop(1.0, 'rgba(255,255,255,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.ellipse(this.cx, this.cy, rx, ry, 0, 0, TAU);
+    ctx.fill();
+    ctx.restore();
   }
 
   /**
@@ -397,135 +567,128 @@ export class AuraEngine {
     if (!ef || ef.intensity <= 0) return;
 
     const t = this.time * ef.speed;
-    const r = Math.max(this.w, this.h) * 0.45 * this.params.intensity;
+    const r = Math.min(this.w, this.h) * 0.35 * this.params.intensity;
     const baseColor = this.params.flameContour.baseColor;
     const tipColor = this.params.flameContour.tipColor;
 
     ctx.save();
     ctx.globalCompositeOperation = 'source-atop';
-    ctx.globalAlpha = ef.intensity * 0.55;
+    ctx.globalAlpha = ef.intensity * 0.8;
 
     let grad: CanvasGradient;
 
     switch (ef.pattern) {
       case 'rise': {
-        // Repeating upward sweep — a bright band moves bottom to top
-        const phase = ((t * 0.5) % 1.0 + 1.0) % 1.0;
+        const phase = ((t * 0.8) % 1.0 + 1.0) % 1.0;
         grad = ctx.createLinearGradient(this.cx, this.cy + r, this.cx, this.cy - r);
-        const bandW = 0.25;
+        const bandW = 0.3;
         const lo = Math.max(0, phase - bandW);
         const hi = Math.min(1, phase + bandW);
         grad.addColorStop(0, baseColor + '00');
         if (lo > 0.01) grad.addColorStop(lo, baseColor + '00');
-        grad.addColorStop(Math.min(phase, 0.99), tipColor + 'BB');
+        grad.addColorStop(Math.min(phase, 0.99), tipColor + 'EE');
         if (hi < 0.99) grad.addColorStop(hi, baseColor + '00');
         grad.addColorStop(1, baseColor + '00');
         break;
       }
 
       case 'cascade': {
-        // Downward sweep — bright band falls top to bottom
-        const phase = ((t * 0.5) % 1.0 + 1.0) % 1.0;
+        const phase = ((t * 0.8) % 1.0 + 1.0) % 1.0;
         grad = ctx.createLinearGradient(this.cx, this.cy - r, this.cx, this.cy + r);
-        const bandW = 0.25;
+        const bandW = 0.3;
         const lo = Math.max(0, phase - bandW);
         const hi = Math.min(1, phase + bandW);
         grad.addColorStop(0, baseColor + '00');
         if (lo > 0.01) grad.addColorStop(lo, baseColor + '00');
-        grad.addColorStop(Math.min(phase, 0.99), tipColor + 'BB');
+        grad.addColorStop(Math.min(phase, 0.99), tipColor + 'EE');
         if (hi < 0.99) grad.addColorStop(hi, baseColor + '00');
         grad.addColorStop(1, baseColor + '00');
         break;
       }
 
       case 'radial-out': {
-        // Expanding ring from center outward
-        const phase = ((t * 0.4) % 1.0 + 1.0) % 1.0;
+        const phase = ((t * 0.7) % 1.0 + 1.0) % 1.0;
         grad = ctx.createRadialGradient(this.cx, this.cy, 0, this.cx, this.cy, r);
-        const bandW = 0.18;
+        const bandW = 0.25;
         const lo = Math.max(0, phase - bandW);
         const hi = Math.min(1, phase + bandW);
         grad.addColorStop(0, baseColor + '00');
         if (lo > 0.01) grad.addColorStop(lo, baseColor + '00');
-        grad.addColorStop(phase, tipColor + 'CC');
+        grad.addColorStop(phase, tipColor + 'EE');
         if (hi < 0.99) grad.addColorStop(hi, baseColor + '00');
         grad.addColorStop(1, baseColor + '00');
         break;
       }
 
       case 'radial-in': {
-        // Contracting ring from outer edge inward
-        const phase = 1.0 - (((t * 0.4) % 1.0 + 1.0) % 1.0);
+        const phase = 1.0 - (((t * 0.7) % 1.0 + 1.0) % 1.0);
         grad = ctx.createRadialGradient(this.cx, this.cy, 0, this.cx, this.cy, r);
-        const bandW = 0.18;
+        const bandW = 0.25;
         const lo = Math.max(0, phase - bandW);
         const hi = Math.min(1, phase + bandW);
         grad.addColorStop(0, baseColor + '00');
         if (lo > 0.01) grad.addColorStop(lo, baseColor + '00');
-        grad.addColorStop(Math.max(0.01, phase), tipColor + 'CC');
+        grad.addColorStop(Math.max(0.01, phase), tipColor + 'EE');
         if (hi < 0.99) grad.addColorStop(hi, baseColor + '00');
         grad.addColorStop(1, baseColor + '00');
         break;
       }
 
       case 'pulse': {
-        // Breathing — the entire aura brightens and dims rhythmically
-        const breath = 0.5 + 0.5 * Math.sin(t * Math.PI);
+        const breath = 0.5 + 0.5 * Math.sin(t * Math.PI * 1.5);
         grad = ctx.createRadialGradient(this.cx, this.cy, 0, this.cx, this.cy, r);
-        const alpha = Math.round(breath * 180).toString(16).padStart(2, '0');
+        const a = Math.round(breath * 240).toString(16).padStart(2, '0');
         grad.addColorStop(0, tipColor + '00');
-        grad.addColorStop(0.3, tipColor + alpha);
-        grad.addColorStop(0.65, baseColor + alpha);
+        grad.addColorStop(0.25, tipColor + a);
+        grad.addColorStop(0.55, baseColor + a);
+        grad.addColorStop(0.80, baseColor + Math.round(breath * 120).toString(16).padStart(2, '0'));
         grad.addColorStop(1, baseColor + '00');
         break;
       }
 
       case 'spiral': {
-        // Rotating off-center glow that sweeps around the character
-        const angle = t * 1.5;
-        const offset = r * 0.35;
+        const angle = t * 2.5;
+        const offset = r * 0.45;
         const ox = this.cx + Math.cos(angle) * offset;
         const oy = this.cy + Math.sin(angle) * offset;
         grad = ctx.createRadialGradient(ox, oy, 0, this.cx, this.cy, r);
-        grad.addColorStop(0, tipColor + 'CC');
-        grad.addColorStop(0.3, tipColor + '88');
-        grad.addColorStop(0.6, baseColor + '33');
+        grad.addColorStop(0, tipColor + 'EE');
+        grad.addColorStop(0.25, tipColor + 'AA');
+        grad.addColorStop(0.5, baseColor + '55');
         grad.addColorStop(1, baseColor + '00');
         break;
       }
 
       case 'zigzag': {
-        // Diagonal band that alternates direction — bounces left-right while rising
-        const cycle = (t * 0.4) % 2.0;
+        const cycle = (t * 0.7) % 2.0;
         const goingRight = cycle < 1.0;
         const phase = goingRight ? cycle : 2.0 - cycle;
-        const xOff = (phase - 0.5) * r * 1.2;
+        const xOff = (phase - 0.5) * r * 1.5;
         grad = ctx.createLinearGradient(
-          this.cx + xOff - r * 0.3, this.cy + r,
-          this.cx + xOff + r * 0.3, this.cy - r,
+          this.cx + xOff - r * 0.4, this.cy + r,
+          this.cx + xOff + r * 0.4, this.cy - r,
         );
-        const bandW = 0.22;
-        const mid = ((t * 0.5) % 1.0 + 1.0) % 1.0;
+        const bandW = 0.28;
+        const mid = ((t * 0.8) % 1.0 + 1.0) % 1.0;
         const lo = Math.max(0, mid - bandW);
         const hi = Math.min(1, mid + bandW);
         grad.addColorStop(0, baseColor + '00');
         if (lo > 0.01) grad.addColorStop(lo, baseColor + '00');
-        grad.addColorStop(Math.min(mid, 0.99), tipColor + 'BB');
+        grad.addColorStop(Math.min(mid, 0.99), tipColor + 'EE');
         if (hi < 0.99) grad.addColorStop(hi, baseColor + '00');
         grad.addColorStop(1, baseColor + '00');
         break;
       }
 
       case 'wave': {
-        // Horizontal wave — a bright region undulates side to side
-        const waveX = Math.sin(t * 1.2) * r * 0.4;
-        const waveY = Math.cos(t * 0.7) * r * 0.15;
+        const waveX = Math.sin(t * 2.0) * r * 0.5;
+        const waveY = Math.cos(t * 1.2) * r * 0.25;
         const ox2 = this.cx + waveX;
         const oy2 = this.cy + waveY;
         grad = ctx.createRadialGradient(ox2, oy2, 0, this.cx, this.cy, r);
-        grad.addColorStop(0, tipColor + 'AA');
-        grad.addColorStop(0.25, tipColor + '66');
-        grad.addColorStop(0.55, baseColor + '22');
+        grad.addColorStop(0, tipColor + 'DD');
+        grad.addColorStop(0.2, tipColor + '99');
+        grad.addColorStop(0.45, baseColor + '44');
         grad.addColorStop(1, baseColor + '00');
         break;
       }
@@ -545,7 +708,8 @@ export class AuraEngine {
   private drawOuterGlow(ctx: CanvasRenderingContext2D): void {
     const g = this.params.outerGlow;
     const pulse = 0.85 + 0.15 * Math.sin(this.time * 1.5);
-    const r = Math.max(this.w, this.h) * g.radius * this.params.intensity;
+    // Cap glow radius to stay within the vignette safe zone
+    const r = Math.min(Math.max(this.w, this.h) * g.radius * this.params.intensity, Math.min(this.w, this.h) * 0.42);
 
     if (!this.outerGrad) {
       this.outerGrad = ctx.createRadialGradient(this.cx, this.cy, 0, this.cx, this.cy, r);
@@ -570,7 +734,7 @@ export class AuraEngine {
   private drawInnerGlow(ctx: CanvasRenderingContext2D): void {
     const g = this.params.innerGlow;
     const pulse = 0.8 + 0.2 * Math.sin(this.time * 2.5);
-    const r = Math.min(this.w, this.h) * g.radius * this.params.intensity;
+    const r = Math.min(Math.min(this.w, this.h) * g.radius * this.params.intensity, Math.min(this.w, this.h) * 0.38);
 
     if (!this.innerGrad) {
       this.innerGrad = ctx.createRadialGradient(this.cx, this.cy, 0, this.cx, this.cy, r);
@@ -590,28 +754,34 @@ export class AuraEngine {
     ctx.restore();
   }
 
-  // Generate jagged flame points at a given scale
+  // Generate jagged flame points at a given scale — elliptical base, ~200% character
   private buildFlamePoints(scaleMul: number): Array<{ x: number; y: number }> {
     const f = this.params.flameContour;
     const intensity = this.params.intensity;
-    const baseW = this.w * 0.194 * f.thickness * intensity * scaleMul;
-    const baseH = this.h * 0.219 * intensity * scaleMul;
+    // Target: aura contour at roughly 200% of character body.
+    // Character ≈ 23% of canvas width, so aura half-width ≈ 0.23 × canvas.
+    // With thickness=1, intensity=1 this yields ~200% char scale.
+    const baseW = this.w * 0.22 * f.thickness * intensity * scaleMul;
+    const baseH = this.h * 0.24 * intensity * scaleMul;
     const flameH = baseH * f.height;
     const t = this.time * f.speed;
     const pointCount = MAX_FLAME_POINTS;
     const jagged = f.jaggedness;
 
     const sm = f.smoothness;
-    // Dampen spike-valley amplitude when smoothness is high
     const spikeDampen = 1.0 - sm * 0.65;
 
-    // Size compensation: jagged auras spike outward, smooth ones collapse inward.
-    // Boost the base radius for smooth auras so the overall visual size stays consistent.
-    // A jagged aura's average radius (spikes + valleys) is already large; a smooth one needs a boost.
     const sizeCompensation = 1.0 + sm * 0.25 * (1.0 - jagged * 0.5);
     const adjBaseW = baseW * sizeCompensation;
     const adjBaseH = baseH * sizeCompensation;
     const adjFlameH = flameH * sizeCompensation;
+
+    // Soft ceiling: compress points that exceed 250% of character scale
+    // instead of hard-clamping (which flattens spikes at the top).
+    const softCeilRx = this.w * 0.28;
+    const softCeilRy = this.h * 0.30;
+    const hardCeilRx = this.w * 0.36;
+    const hardCeilRy = this.h * 0.38;
 
     const points: Array<{ x: number; y: number }> = [];
     for (let i = 0; i < pointCount; i++) {
@@ -622,20 +792,94 @@ export class AuraEngine {
       const cosA = this.cos(degIdx);
       const sinA = this.sin(degIdx);
 
+      // ── Conical flame shape: wide+flat at bottom, tapering to a peak at top ──
       const isTop = sinA < 0;
-      const upBias = isTop ? 1.0 + Math.abs(sinA) * f.height * 1.3 : 1.0;
+
+      // vertPos: 0 = top peak, 1 = bottom base
+      const vertPos = (sinA + 1) / 2;
+
+      // Conical taper: horizontal width narrows toward the top
+      // Bottom (vertPos=1) → full width, Top (vertPos=0) → 35% width
+      const conicalTaper = 0.35 + vertPos * 0.65;
+
+      // Upward extension: top points reach much higher (gives the conical peak)
+      const upBias = isTop ? 1.0 + Math.abs(sinA) * f.height * 1.1 : 1.0;
+
+      // Bottom flattening: compress vertical extent at the bottom
+      const bottomFlatten = !isTop ? 0.5 + (1.0 - sinA) * 0.25 : 1.0;
 
       const isSpike = i % 2 === 0;
       const spikeAmp = isSpike
-        ? 1.0 + jagged * spikeDampen * (0.4 + 0.35 * Math.sin(t * 3.2 + this.flameOffsets[i]))
-        : 1.0 - jagged * spikeDampen * (0.15 + 0.1 * Math.sin(t * 2.8 + this.flameOffsets[i] * 1.3));
+        ? 1.0 + jagged * spikeDampen * (0.3 + 0.25 * Math.sin(t * 3.2 + this.flameOffsets[i]))
+        : 1.0 - jagged * spikeDampen * (0.12 + 0.08 * Math.sin(t * 2.8 + this.flameOffsets[i] * 1.3));
 
-      const n1 = Math.sin(t * 2.5 + this.flameOffsets[i] + angle * 4) * 0.2 * spikeDampen;
-      const n2 = Math.sin(t * 5.0 + this.flameOffsets[i] * 2.1 + angle * 7) * 0.12 * jagged * spikeDampen;
+      const n1 = Math.sin(t * 2.5 + this.flameOffsets[i] + angle * 4) * 0.15 * spikeDampen;
+      const n2 = Math.sin(t * 5.0 + this.flameOffsets[i] * 2.1 + angle * 7) * 0.09 * jagged * spikeDampen;
       const noise = (n1 + n2) * upBias;
 
-      const rx = adjBaseW * spikeAmp * (1 + noise * 0.5) * upBias;
-      const ry = (isTop ? adjFlameH : adjBaseH * 0.65) * spikeAmp * (1 + noise * 0.3);
+      let rx = adjBaseW * conicalTaper * spikeAmp * (1 + noise * 0.4) * upBias;
+      let ry = (isTop ? adjFlameH : adjBaseH * bottomFlatten) * spikeAmp * (1 + noise * 0.25);
+
+      // Physics-driven contour deformation — makes the aura shape visibly move
+      const phys = this.params.energyFlow?.pattern ?? 'radial-out';
+      switch (phys) {
+        case 'spiral': {
+          // Rotate the whole contour over time — visible spinning
+          const rotOff = t * 1.8;
+          const rotAngle = angle + rotOff;
+          const rIdx = ((rotAngle / TAU * 360 + 360) % 360) | 0;
+          const rCos = this.cos(rIdx);
+          const rSin = this.sin(rIdx);
+          rx = this.softCeil(rx, softCeilRx, hardCeilRx);
+          ry = this.softCeil(ry, softCeilRy, hardCeilRy);
+          points.push({ x: this.cx + rCos * rx, y: this.cy + rSin * ry });
+          continue;
+        }
+        case 'rise': {
+          const liftBias = isTop ? 1.0 + 0.25 * Math.sin(t * 2) : 0.8 - 0.15 * Math.sin(t * 2);
+          ry *= liftBias;
+          break;
+        }
+        case 'radial-out': {
+          const outPulse = 1.0 + 0.12 * Math.sin(t * 3.0 + angle * 2);
+          rx *= outPulse;
+          ry *= outPulse;
+          break;
+        }
+        case 'radial-in': {
+          const inPulse = 1.0 - 0.15 * Math.sin(t * 3.0 + angle * 2);
+          rx *= inPulse;
+          ry *= inPulse;
+          break;
+        }
+        case 'cascade': {
+          const fallBias = isTop ? 0.8 - 0.12 * Math.sin(t * 2) : 1.0 + 0.3 * Math.sin(t * 2);
+          ry *= fallBias;
+          break;
+        }
+        case 'pulse': {
+          const breath = 1.0 + 0.2 * Math.sin(t * 2.8);
+          rx *= breath;
+          ry *= breath;
+          break;
+        }
+        case 'zigzag': {
+          const wobble = Math.sin(t * 4 + sinA * 6) * 0.12;
+          rx *= (1.0 + wobble);
+          break;
+        }
+        case 'wave': {
+          const wDisp = Math.sin(t * 2.0 + sinA * 5) * adjBaseW * 0.15;
+          rx = this.softCeil(rx, softCeilRx, hardCeilRx);
+          ry = this.softCeil(ry, softCeilRy, hardCeilRy);
+          points.push({ x: this.cx + cosA * rx + wDisp, y: this.cy + sinA * ry });
+          continue;
+        }
+      }
+
+      // Soft compress: preserves relative spike/valley differences even past the soft limit
+      rx = this.softCeil(rx, softCeilRx, hardCeilRx);
+      ry = this.softCeil(ry, softCeilRy, hardCeilRy);
 
       points.push({
         x: this.cx + cosA * rx,
@@ -643,6 +887,18 @@ export class AuraEngine {
       });
     }
     return points;
+  }
+
+  /**
+   * Soft ceiling: below `soft` → unchanged; above `soft` → compressed toward `hard`.
+   * Preserves relative differences between spikes instead of flattening them.
+   */
+  private softCeil(v: number, soft: number, hard: number): number {
+    if (v <= soft) return v;
+    const excess = v - soft;
+    const range = hard - soft;
+    // Asymptotic compression: excess is squeezed logarithmically into remaining range
+    return soft + range * (1 - Math.exp(-excess / range));
   }
 
   // Layer 3: flame contour with dynamic glowing band between inner and outer borders
@@ -687,7 +943,7 @@ export class AuraEngine {
 
     // Animated gradient that pulses through the band
     const phase = this.time * 1.8;
-    const bandR = Math.max(this.w, this.h) * 0.4 * this.params.intensity;
+    const bandR = Math.min(this.w, this.h) * 0.35 * this.params.intensity;
     const grad = ctx.createRadialGradient(this.cx, this.cy, bandR * 0.3, this.cx, this.cy, bandR);
 
     const pulseA = 0.5 + 0.45 * Math.sin(phase);
@@ -820,7 +1076,7 @@ export class AuraEngine {
 
     // Hollow center: fully transparent where the character stands,
     // then a hard ramp to opaque at the outer flame edges
-    const flameR = Math.max(this.w, this.h) * 0.38 * this.params.intensity;
+    const flameR = Math.min(this.w, this.h) * 0.34 * this.params.intensity;
     const hollowGrad = ctx.createRadialGradient(this.cx, this.cy, 0, this.cx, this.cy, flameR);
     hollowGrad.addColorStop(0, baseColor + '00');
     hollowGrad.addColorStop(0.35, baseColor + '00');
@@ -860,25 +1116,36 @@ export class AuraEngine {
     ctx.restore();
   }
 
-  // Layer 4: floating particles (generic + themed shapes)
+  // Layer 4: floating particles (thematic + elemental + custom + generic)
   private drawParticles(ctx: CanvasRenderingContext2D): void {
     const p = this.params.particles;
     const shapes = p.shapes;
+    const elemental = p.elementalShapes;
 
     ctx.save();
     for (const pt of this.particles) {
       if (!pt.active || pt.alpha <= 0) continue;
 
-      ctx.globalAlpha = pt.alpha * 0.9;
       const color = (pt.useSecondary && p.secondaryColor) ? p.secondaryColor : p.color;
+      const heroEmoji = p.heroEmoji;
 
-      // Custom AI-generated path particle (highest priority)
+      // HERO: Emoji particle — instantly recognizable, large, glowing
+      if (pt.emojiIdx >= 0 && heroEmoji && heroEmoji[pt.emojiIdx]) {
+        ctx.globalAlpha = pt.alpha;
+        this.drawEmojiParticle(ctx, heroEmoji[pt.emojiIdx], pt.x, pt.y, pt.size, pt.rotation, color);
+        continue;
+      }
+
+      // Secondary: Custom AI-generated path particle
       if (pt.customPathIdx >= 0 && this.customPath2Ds[pt.customPathIdx]) {
+        ctx.globalAlpha = pt.alpha * 0.9;
         drawCustomSVGPath(ctx, this.customPath2Ds[pt.customPathIdx], pt.x, pt.y, pt.size, pt.rotation, color);
         continue;
       }
 
-      // Library themed shape particle
+      ctx.globalAlpha = pt.alpha * 0.7;
+
+      // Thematic library shape (small ambient icons)
       if (pt.shapeIdx >= 0 && shapes && shapes[pt.shapeIdx]) {
         const shapeId = shapes[pt.shapeIdx];
         if (SHAPE_REGISTRY[shapeId]) {
@@ -887,7 +1154,16 @@ export class AuraEngine {
         }
       }
 
-      // Generic particle style
+      // Elemental library shape (tiny ambient effects)
+      if (pt.elementalShapeIdx >= 0 && elemental && elemental[pt.elementalShapeIdx]) {
+        const shapeId = elemental[pt.elementalShapeIdx];
+        if (SHAPE_REGISTRY[shapeId]) {
+          drawThemedShape(ctx, shapeId, pt.x, pt.y, pt.size, pt.rotation, color);
+          continue;
+        }
+      }
+
+      // Generic particle style fallback
       switch (p.style) {
         case 'ember':
           this.drawEmber(ctx, pt, color);
@@ -911,6 +1187,40 @@ export class AuraEngine {
           this.drawEmber(ctx, pt, color);
       }
     }
+    ctx.restore();
+  }
+
+  private drawEmojiParticle(
+    ctx: CanvasRenderingContext2D,
+    emoji: string,
+    x: number,
+    y: number,
+    size: number,
+    rotation: number,
+    glowColor: string,
+  ): void {
+    const fontSize = size * 2.2;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rotation);
+
+    // Colored glow behind the emoji
+    ctx.shadowColor = glowColor;
+    ctx.shadowBlur = size * 3;
+
+    ctx.font = `${fontSize}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // First pass: glow only (draw twice for stronger glow)
+    ctx.fillText(emoji, 0, 0);
+    ctx.fillText(emoji, 0, 0);
+
+    // Second pass: crisp emoji on top (reduced shadow)
+    ctx.shadowBlur = size;
+    ctx.fillText(emoji, 0, 0);
+
+    ctx.shadowBlur = 0;
     ctx.restore();
   }
 

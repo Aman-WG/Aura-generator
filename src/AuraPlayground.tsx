@@ -155,8 +155,8 @@ export function AuraPlayground() {
             {effectiveParams && (
               <AuraCanvas
                 params={effectiveParams}
-                width={400}
-                height={500}
+                width={700}
+                height={700}
                 frontOpacity={0.15}
                 backZIndex={1}
                 frontZIndex={3}

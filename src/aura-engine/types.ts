@@ -35,8 +35,12 @@ export interface AuraParams {
     style: ParticleStyle;
     drift: ParticleDrift;
     shapes?: string[];
-    /** AI-generated SVG path `d` strings for detailed contextual particles (48x48 viewBox) */
+    /** Elemental effect shapes (burning_splinter, fire_spark, ice_shard, etc.) */
+    elementalShapes?: string[];
+    /** AI-generated SVG path `d` strings for detailed contextual particles (64x64 viewBox) */
     customPaths?: Array<{ name: string; path: string }>;
+    /** 2 emoji characters that represent the prompt's most iconic symbols */
+    heroEmoji?: [string, string];
   };
   lightning: {
     enabled: boolean;
@@ -69,10 +73,14 @@ export interface Particle {
   rotationSpeed: number;
   active: boolean;
   useSecondary: boolean;
-  /** Index into library shapes array (-1 = none) */
+  /** Index into thematic library shapes array (-1 = none) */
   shapeIdx: number;
+  /** Index into elemental library shapes array (-1 = none) */
+  elementalShapeIdx: number;
   /** Index into customPaths array (-1 = none) */
   customPathIdx: number;
+  /** Index into heroEmoji array (-1 = none) */
+  emojiIdx: number;
 }
 
 /** A point on the flame contour perimeter */

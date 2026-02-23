@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import type { AuraParams, EnergyFlowPattern } from '../../aura-engine/types';
 
@@ -10,12 +10,12 @@ interface AuraModifierPanelProps {
 
 const PHYSICS_OPTIONS: Array<{ id: EnergyFlowPattern; label: string; icon: string }> = [
   { id: 'spiral', label: 'Vortex', icon: '🌀' },
-  { id: 'rise', label: 'Rise Up', icon: '🔼' },
+  { id: 'rise', label: 'Rise', icon: '🔼' },
   { id: 'radial-out', label: 'Explode', icon: '💥' },
   { id: 'radial-in', label: 'Implode', icon: '🕳️' },
-  { id: 'cascade', label: 'Flow Down', icon: '🌊' },
+  { id: 'cascade', label: 'Fall', icon: '🌊' },
   { id: 'pulse', label: 'Pulse', icon: '💓' },
-  { id: 'zigzag', label: 'Zig Zag', icon: '⚡' },
+  { id: 'zigzag', label: 'ZigZag', icon: '⚡' },
   { id: 'wave', label: 'Wave', icon: '〰️' },
 ];
 
@@ -25,12 +25,21 @@ export function AuraModifierPanel({ params, onModify, onHover }: AuraModifierPan
   const [speed, setSpeed] = useState(params.flameContour.speed);
   const [particleSize, setParticleSize] = useState(params.particles.size);
 
+  const paramsRef = useRef(params);
+  const pendingRef = useRef<AuraParams | null>(null);
+  const rafRef = useRef(0);
+  paramsRef.current = params;
+
   useEffect(() => {
     setPhysics(params.energyFlow?.pattern ?? 'radial-out');
     setSpeed(params.flameContour.speed);
     setParticleSize(params.particles.size);
     setNature(Math.round(params.flameContour.smoothness * 100));
   }, [params]);
+
+  useEffect(() => {
+    return () => cancelAnimationFrame(rafRef.current);
+  }, []);
 
   const emit = useCallback(
     (patch: Partial<{
@@ -39,7 +48,7 @@ export function AuraModifierPanel({ params, onModify, onHover }: AuraModifierPan
       speed: number;
       particleSize: number;
     }>) => {
-      const p: AuraParams = JSON.parse(JSON.stringify(params));
+      const p: AuraParams = JSON.parse(JSON.stringify(paramsRef.current));
 
       const phys = patch.physics ?? physics;
       const nat = patch.nature ?? nature;
@@ -55,9 +64,16 @@ export function AuraModifierPanel({ params, onModify, onHover }: AuraModifierPan
       p.flameContour.speed = spd;
       p.particles.size = ps;
 
-      onModify(p);
+      pendingRef.current = p;
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(() => {
+        if (pendingRef.current) {
+          onModify(pendingRef.current);
+          pendingRef.current = null;
+        }
+      });
     },
-    [params, physics, nature, speed, particleSize, onModify],
+    [physics, nature, speed, particleSize, onModify],
   );
 
   const handlePhysics = (id: EnergyFlowPattern) => {
@@ -89,12 +105,12 @@ export function AuraModifierPanel({ params, onModify, onHover }: AuraModifierPan
       className="aura-modifiers"
       initial={{ x: -60, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
-      transition={{ delay: 1.8, type: 'spring', stiffness: 120, damping: 18 }}
+      transition={{ delay: 0.1, type: 'spring', stiffness: 120, damping: 18 }}
     >
       <div className="aura-modifiers__title">AURA MODIFIERS</div>
 
       <div className="aura-modifiers__list">
-        {/* Physics buttons */}
+        {/* Physics flow buttons */}
         <div className="aura-modifiers__item">
           <label className="aura-modifiers__label">
             <span className="aura-modifiers__icon">🌪️</span>
@@ -115,7 +131,7 @@ export function AuraModifierPanel({ params, onModify, onHover }: AuraModifierPan
           </div>
         </div>
 
-        {/* Aura Nature */}
+        {/* Aura Nature — chaos ↔ calm */}
         <div className="aura-modifiers__item">
           <label className="aura-modifiers__label">
             <span className="aura-modifiers__icon">🎭</span>

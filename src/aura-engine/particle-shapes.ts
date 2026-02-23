@@ -5,6 +5,8 @@
 // scaled by `s` (half-size). Caller handles translate/rotate.
 // ─────────────────────────────────────────────────────────────
 
+const TAU = Math.PI * 2;
+
 type ShapeFn = (ctx: CanvasRenderingContext2D, s: number) => void;
 
 const lightning_bolt: ShapeFn = (ctx, s) => {
@@ -652,6 +654,224 @@ const dragon_head: ShapeFn = (ctx, s) => {
   ctx.fill();
 };
 
+// ── Elemental effect shapes ──────────────────────────────────
+
+const burning_splinter: ShapeFn = (ctx, s) => {
+  ctx.beginPath();
+  ctx.moveTo(0, -s);
+  ctx.lineTo(s * 0.18, -s * 0.2);
+  ctx.lineTo(s * 0.12, s * 0.5);
+  ctx.quadraticCurveTo(s * 0.06, s * 0.9, 0, s);
+  ctx.quadraticCurveTo(-s * 0.06, s * 0.9, -s * 0.12, s * 0.5);
+  ctx.lineTo(-s * 0.18, -s * 0.2);
+  ctx.closePath();
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(0, -s * 1.1);
+  ctx.quadraticCurveTo(s * 0.15, -s * 0.7, s * 0.08, -s * 0.5);
+  ctx.quadraticCurveTo(-s * 0.1, -s * 0.7, 0, -s * 1.1);
+  ctx.closePath();
+  ctx.fill();
+};
+
+const fire_spark: ShapeFn = (ctx, s) => {
+  const rays = 6;
+  ctx.beginPath();
+  for (let i = 0; i < rays; i++) {
+    const a = (i / rays) * TAU;
+    const aMid = ((i + 0.5) / rays) * TAU;
+    const outerR = (i % 2 === 0) ? s : s * 0.7;
+    ctx.lineTo(Math.cos(a) * outerR, Math.sin(a) * outerR);
+    ctx.lineTo(Math.cos(aMid) * s * 0.25, Math.sin(aMid) * s * 0.25);
+  }
+  ctx.closePath();
+  ctx.fill();
+};
+
+const smoke_puff: ShapeFn = (ctx, s) => {
+  ctx.beginPath();
+  ctx.arc(-s * 0.3, s * 0.15, s * 0.45, 0, TAU);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(s * 0.25, s * 0.1, s * 0.4, 0, TAU);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(0, -s * 0.25, s * 0.5, 0, TAU);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(s * 0.05, s * 0.35, s * 0.3, 0, TAU);
+  ctx.fill();
+};
+
+const electric_spark: ShapeFn = (ctx, s) => {
+  ctx.beginPath();
+  ctx.moveTo(0, -s);
+  ctx.lineTo(s * 0.25, -s * 0.35);
+  ctx.lineTo(s * 0.7, -s * 0.4);
+  ctx.lineTo(s * 0.2, 0);
+  ctx.lineTo(s * 0.5, s * 0.1);
+  ctx.lineTo(0, s);
+  ctx.lineTo(-s * 0.15, s * 0.2);
+  ctx.lineTo(-s * 0.6, s * 0.3);
+  ctx.lineTo(-s * 0.15, -s * 0.1);
+  ctx.lineTo(-s * 0.55, -s * 0.25);
+  ctx.lineTo(-s * 0.1, -s * 0.4);
+  ctx.closePath();
+  ctx.fill();
+};
+
+const plasma_orb: ShapeFn = (ctx, s) => {
+  ctx.beginPath();
+  ctx.arc(0, 0, s * 0.5, 0, TAU);
+  ctx.fill();
+  ctx.lineWidth = s * 0.1;
+  ctx.lineCap = 'round';
+  const arcs = 5;
+  for (let i = 0; i < arcs; i++) {
+    const a = (i / arcs) * TAU;
+    const r = s * 0.5;
+    const ox = Math.cos(a) * r;
+    const oy = Math.sin(a) * r;
+    const ex = Math.cos(a) * s;
+    const ey = Math.sin(a) * s;
+    const jx = (Math.random() - 0.5) * s * 0.3;
+    const jy = (Math.random() - 0.5) * s * 0.3;
+    ctx.beginPath();
+    ctx.moveTo(ox, oy);
+    ctx.quadraticCurveTo(ox + jx, oy + jy, ex, ey);
+    ctx.stroke();
+  }
+};
+
+const water_splash: ShapeFn = (ctx, s) => {
+  ctx.beginPath();
+  ctx.moveTo(-s * 0.7, s * 0.5);
+  ctx.quadraticCurveTo(-s * 0.5, s * 0.1, -s * 0.6, -s * 0.3);
+  ctx.quadraticCurveTo(-s * 0.55, -s * 0.6, -s * 0.35, -s * 0.5);
+  ctx.quadraticCurveTo(-s * 0.2, -s * 0.2, -s * 0.15, -s * 0.8);
+  ctx.quadraticCurveTo(-s * 0.05, -s * 0.4, 0, -s);
+  ctx.quadraticCurveTo(s * 0.05, -s * 0.4, s * 0.15, -s * 0.8);
+  ctx.quadraticCurveTo(s * 0.2, -s * 0.2, s * 0.35, -s * 0.5);
+  ctx.quadraticCurveTo(s * 0.55, -s * 0.6, s * 0.6, -s * 0.3);
+  ctx.quadraticCurveTo(s * 0.5, s * 0.1, s * 0.7, s * 0.5);
+  ctx.quadraticCurveTo(0, s * 0.2, -s * 0.7, s * 0.5);
+  ctx.closePath();
+  ctx.fill();
+};
+
+const ice_shard: ShapeFn = (ctx, s) => {
+  ctx.beginPath();
+  ctx.moveTo(0, -s);
+  ctx.lineTo(s * 0.35, -s * 0.3);
+  ctx.lineTo(s * 0.25, s * 0.2);
+  ctx.lineTo(s * 0.4, s * 0.6);
+  ctx.lineTo(0, s);
+  ctx.lineTo(-s * 0.4, s * 0.6);
+  ctx.lineTo(-s * 0.25, s * 0.2);
+  ctx.lineTo(-s * 0.35, -s * 0.3);
+  ctx.closePath();
+  ctx.fill();
+  ctx.save();
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.globalAlpha = 0.3;
+  ctx.beginPath();
+  ctx.moveTo(0, -s * 0.7);
+  ctx.lineTo(s * 0.12, s * 0.1);
+  ctx.lineTo(-s * 0.12, s * 0.1);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+};
+
+const wind_streak: ShapeFn = (ctx, s) => {
+  ctx.lineWidth = s * 0.18;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(-s, s * 0.3);
+  ctx.quadraticCurveTo(-s * 0.3, s * 0.3, 0, 0);
+  ctx.quadraticCurveTo(s * 0.3, -s * 0.3, s, -s * 0.3);
+  ctx.stroke();
+  ctx.lineWidth = s * 0.12;
+  ctx.beginPath();
+  ctx.moveTo(-s * 0.7, s * 0.6);
+  ctx.quadraticCurveTo(-s * 0.1, s * 0.6, s * 0.3, s * 0.3);
+  ctx.stroke();
+  ctx.lineWidth = s * 0.09;
+  ctx.beginPath();
+  ctx.moveTo(-s * 0.5, -s * 0.4);
+  ctx.quadraticCurveTo(0, -s * 0.5, s * 0.6, -s * 0.7);
+  ctx.stroke();
+};
+
+const petal: ShapeFn = (ctx, s) => {
+  ctx.beginPath();
+  ctx.moveTo(0, -s);
+  ctx.bezierCurveTo(s * 0.6, -s * 0.7, s * 0.8, -s * 0.1, s * 0.5, s * 0.4);
+  ctx.quadraticCurveTo(s * 0.2, s * 0.8, 0, s);
+  ctx.quadraticCurveTo(-s * 0.2, s * 0.8, -s * 0.5, s * 0.4);
+  ctx.bezierCurveTo(-s * 0.8, -s * 0.1, -s * 0.6, -s * 0.7, 0, -s);
+  ctx.closePath();
+  ctx.fill();
+  ctx.lineWidth = s * 0.05;
+  ctx.beginPath();
+  ctx.moveTo(0, -s * 0.6);
+  ctx.quadraticCurveTo(s * 0.05, 0, 0, s * 0.7);
+  ctx.stroke();
+};
+
+const vine_curl: ShapeFn = (ctx, s) => {
+  ctx.lineWidth = s * 0.2;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(-s * 0.3, s);
+  ctx.quadraticCurveTo(-s * 0.4, s * 0.3, 0, 0);
+  ctx.quadraticCurveTo(s * 0.5, -s * 0.4, s * 0.3, -s * 0.7);
+  ctx.quadraticCurveTo(s * 0.1, -s * 0.9, -s * 0.1, -s * 0.7);
+  ctx.quadraticCurveTo(-s * 0.3, -s * 0.5, -s * 0.15, -s * 0.3);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.ellipse(s * 0.15, -s * 0.85, s * 0.15, s * 0.1, -0.5, 0, TAU);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(-s * 0.05, -s * 0.55, s * 0.12, s * 0.08, 0.4, 0, TAU);
+  ctx.fill();
+};
+
+const shadow_wisp: ShapeFn = (ctx, s) => {
+  ctx.beginPath();
+  ctx.moveTo(0, -s);
+  ctx.quadraticCurveTo(s * 0.4, -s * 0.7, s * 0.3, -s * 0.3);
+  ctx.quadraticCurveTo(s * 0.6, -s * 0.1, s * 0.5, s * 0.2);
+  ctx.quadraticCurveTo(s * 0.3, s * 0.5, s * 0.4, s * 0.8);
+  ctx.quadraticCurveTo(s * 0.2, s * 0.6, 0, s * 0.7);
+  ctx.quadraticCurveTo(-s * 0.2, s * 0.8, -s * 0.35, s * 0.5);
+  ctx.quadraticCurveTo(-s * 0.5, s * 0.2, -s * 0.4, -s * 0.1);
+  ctx.quadraticCurveTo(-s * 0.3, -s * 0.4, -s * 0.15, -s * 0.6);
+  ctx.quadraticCurveTo(-s * 0.05, -s * 0.8, 0, -s);
+  ctx.closePath();
+  ctx.fill();
+};
+
+const light_ray: ShapeFn = (ctx, s) => {
+  ctx.beginPath();
+  ctx.moveTo(0, -s);
+  ctx.lineTo(s * 0.2, -s * 0.3);
+  ctx.lineTo(s * 0.08, -s * 0.3);
+  ctx.lineTo(s * 0.15, s * 0.4);
+  ctx.lineTo(s * 0.05, s * 0.4);
+  ctx.lineTo(s * 0.1, s);
+  ctx.lineTo(-s * 0.1, s);
+  ctx.lineTo(-s * 0.05, s * 0.4);
+  ctx.lineTo(-s * 0.15, s * 0.4);
+  ctx.lineTo(-s * 0.08, -s * 0.3);
+  ctx.lineTo(-s * 0.2, -s * 0.3);
+  ctx.closePath();
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(0, -s * 0.15, s * 0.25, 0, TAU);
+  ctx.fill();
+};
+
 export const SHAPE_REGISTRY: Record<string, ShapeFn> = {
   lightning_bolt, flame, crescent, bat, star, heart, diamond, crown, skull,
   leaf, snowflake, droplet, music_note, fist, eye, spiral, arrow, shield,
@@ -659,6 +879,8 @@ export const SHAPE_REGISTRY: Record<string, ShapeFn> = {
   claw_marks, batarang, kunai, shuriken, rocket, planet, car, football,
   trophy, guitar, tree, moon, candy_cane, cowl, wave, anchor, feather,
   gear, potion, fire_breath, mask, cherry_blossom, dragon_head,
+  burning_splinter, fire_spark, smoke_puff, electric_spark, plasma_orb,
+  water_splash, ice_shard, wind_streak, petal, vine_curl, shadow_wisp, light_ray,
 };
 
 export const VALID_SHAPE_IDS = Object.keys(SHAPE_REGISTRY);
@@ -698,7 +920,8 @@ export function drawThemedShape(
 
 /**
  * Renders a pre-cached Path2D (from AI-generated SVG path d string).
- * Paths are authored in a 48x48 viewBox; we scale to the target size.
+ * Paths are authored in a 64x64 viewBox; we scale to the target size.
+ * Hero particles get strong glow and a bright core for maximum visibility.
  */
 export function drawCustomSVGPath(
   ctx: CanvasRenderingContext2D,
@@ -709,24 +932,29 @@ export function drawCustomSVGPath(
   rotation: number,
   color: string,
 ): void {
-  const scale = size / 24;
+  const scale = size / 32;
 
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(rotation);
   ctx.scale(scale, scale);
-  ctx.translate(-24, -24);
+  ctx.translate(-32, -32);
 
+  // Outer glow pass
   ctx.fillStyle = color;
-  ctx.strokeStyle = color;
-
   ctx.shadowColor = color;
-  ctx.shadowBlur = 18;
+  ctx.shadowBlur = 25;
   ctx.fill(path2d);
 
-  ctx.shadowBlur = 6;
+  // Second fill for intensity
+  ctx.shadowBlur = 12;
+  ctx.fill(path2d);
+
+  // Bright white-hot core
+  ctx.shadowBlur = 4;
   ctx.shadowColor = '#FFFFFF';
-  ctx.globalAlpha *= 0.4;
+  ctx.fillStyle = '#FFFFFF';
+  ctx.globalAlpha *= 0.3;
   ctx.fill(path2d);
 
   ctx.shadowBlur = 0;

@@ -107,8 +107,8 @@ export function RevealUnlock({ onEquip, onRetry, onHover, onModifyParams, avatar
             {auraParams && (
               <AuraCanvas
                 params={auraParams}
-                width={400}
-                height={440}
+                width={700}
+                height={700}
                 frontOpacity={0.18}
                 backZIndex={1}
                 frontZIndex={4}
