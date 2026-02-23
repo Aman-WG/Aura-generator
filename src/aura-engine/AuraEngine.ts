@@ -386,26 +386,6 @@ export class AuraEngine {
     this.drawParticles(ctx);
     this.drawLightning(ctx);
 
-    ctx.globalAlpha = 1;
-    this.drawEdgeFade(ctx);
-  }
-
-  /** Soft-fade all drawn content to transparent near canvas edges using destination-in */
-  private drawEdgeFade(ctx: CanvasRenderingContext2D): void {
-    const rx = this.w * 0.5;
-    const ry = this.h * 0.5;
-    ctx.save();
-    ctx.globalCompositeOperation = 'destination-in';
-    const grad = ctx.createRadialGradient(this.cx, this.cy, 0, this.cx, this.cy, Math.max(rx, ry));
-    grad.addColorStop(0, 'rgba(0,0,0,1)');
-    grad.addColorStop(0.75, 'rgba(0,0,0,1)');
-    grad.addColorStop(0.92, 'rgba(0,0,0,0.3)');
-    grad.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.ellipse(this.cx, this.cy, rx, ry, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
   }
 
   /**
@@ -510,6 +490,42 @@ export class AuraEngine {
         grad.addColorStop(0, tipColor + 'CC');
         grad.addColorStop(0.3, tipColor + '88');
         grad.addColorStop(0.6, baseColor + '33');
+        grad.addColorStop(1, baseColor + '00');
+        break;
+      }
+
+      case 'zigzag': {
+        // Diagonal band that alternates direction — bounces left-right while rising
+        const cycle = (t * 0.4) % 2.0;
+        const goingRight = cycle < 1.0;
+        const phase = goingRight ? cycle : 2.0 - cycle;
+        const xOff = (phase - 0.5) * r * 1.2;
+        grad = ctx.createLinearGradient(
+          this.cx + xOff - r * 0.3, this.cy + r,
+          this.cx + xOff + r * 0.3, this.cy - r,
+        );
+        const bandW = 0.22;
+        const mid = ((t * 0.5) % 1.0 + 1.0) % 1.0;
+        const lo = Math.max(0, mid - bandW);
+        const hi = Math.min(1, mid + bandW);
+        grad.addColorStop(0, baseColor + '00');
+        if (lo > 0.01) grad.addColorStop(lo, baseColor + '00');
+        grad.addColorStop(Math.min(mid, 0.99), tipColor + 'BB');
+        if (hi < 0.99) grad.addColorStop(hi, baseColor + '00');
+        grad.addColorStop(1, baseColor + '00');
+        break;
+      }
+
+      case 'wave': {
+        // Horizontal wave — a bright region undulates side to side
+        const waveX = Math.sin(t * 1.2) * r * 0.4;
+        const waveY = Math.cos(t * 0.7) * r * 0.15;
+        const ox2 = this.cx + waveX;
+        const oy2 = this.cy + waveY;
+        grad = ctx.createRadialGradient(ox2, oy2, 0, this.cx, this.cy, r);
+        grad.addColorStop(0, tipColor + 'AA');
+        grad.addColorStop(0.25, tipColor + '66');
+        grad.addColorStop(0.55, baseColor + '22');
         grad.addColorStop(1, baseColor + '00');
         break;
       }

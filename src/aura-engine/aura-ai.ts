@@ -194,7 +194,7 @@ Use the EXACT signature colors and visual identity of whatever "${prompt}" refer
 
 const VALID_STYLES: ParticleStyle[] = ['ember', 'sparkle', 'debris', 'lightning', 'bubble', 'orb'];
 const VALID_DRIFTS: ParticleDrift[] = ['rise', 'spiral', 'burst', 'float'];
-const VALID_FLOWS: EnergyFlowPattern[] = ['radial-out', 'radial-in', 'rise', 'spiral', 'pulse', 'cascade'];
+const VALID_FLOWS: EnergyFlowPattern[] = ['radial-out', 'radial-in', 'rise', 'spiral', 'pulse', 'cascade', 'zigzag', 'wave'];
 
 function clamp(v: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, v));

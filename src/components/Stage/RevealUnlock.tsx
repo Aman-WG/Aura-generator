@@ -1,4 +1,5 @@
-import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { AuraParams } from '../../aura-engine/types';
 import type { AuraError } from '../../hooks/useSynthesizer';
 import { AuraCanvas } from './AuraCanvas';
@@ -15,6 +16,7 @@ interface RevealUnlockProps {
 }
 
 const SPARKLE_COUNT = 14;
+const CENTER_HOLD = 400;
 
 const sparkles = Array.from({ length: SPARKLE_COUNT }, (_, i) => {
   const angle = (360 / SPARKLE_COUNT) * i;
@@ -25,8 +27,13 @@ const sparkles = Array.from({ length: SPARKLE_COUNT }, (_, i) => {
 });
 
 export function RevealUnlock({ onEquip, onRetry, onHover, onModifyParams, avatarImageUrl, auraParams, auraError }: RevealUnlockProps) {
-  const auraName = auraParams?.auraName;
   const isFallback = auraError?.source === 'fallback';
+  const [settled, setSettled] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setSettled(true), CENTER_HOLD);
+    return () => clearTimeout(t);
+  }, []);
 
   return (
     <motion.div
@@ -36,7 +43,6 @@ export function RevealUnlock({ onEquip, onRetry, onHover, onModifyParams, avatar
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
     >
-      {/* Full-screen dim overlay */}
       <motion.div
         className="reveal-unlock__dim"
         initial={{ opacity: 0 }}
@@ -44,24 +50,29 @@ export function RevealUnlock({ onEquip, onRetry, onHover, onModifyParams, avatar
         transition={{ duration: 0.8, ease: 'easeOut' }}
       />
 
-      {/* Two-column layout */}
       <div className="reveal-unlock__layout">
 
-        {/* LEFT — Aura Modifier Controls */}
+        {/* LEFT — Modifier panel (appears after character settles) */}
         <div className="reveal-unlock__left">
-          {auraParams && onModifyParams && (
-            <AuraModifierPanel
-              params={auraParams}
-              onModify={onModifyParams}
-              onHover={onHover}
-            />
-          )}
+          <AnimatePresence>
+            {settled && auraParams && onModifyParams && (
+              <AuraModifierPanel
+                params={auraParams}
+                onModify={onModifyParams}
+                onHover={onHover}
+              />
+            )}
+          </AnimatePresence>
         </div>
 
         {/* RIGHT — Character + Aura + CTAs */}
-        <div className="reveal-unlock__right">
+        <motion.div
+          className="reveal-unlock__right"
+          initial={{ x: '-25vw' }}
+          animate={{ x: settled ? 0 : '-25vw' }}
+          transition={{ duration: 0.3, ease: [0.42, 0, 0.58, 1] }}
+        >
           <div className="reveal-unlock__character-area">
-            {/* Rotating light rays */}
             <motion.div
               className="reveal-unlock__rays"
               initial={{ opacity: 0, scale: 0.5, rotate: 0 }}
@@ -104,13 +115,12 @@ export function RevealUnlock({ onEquip, onRetry, onHover, onModifyParams, avatar
               />
             )}
 
-            {/* Character — zooms in center, then slides right is handled by parent layout */}
             <motion.div
               className="reveal-unlock__character"
               initial={{ opacity: 0, scale: 0.15, y: 60 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{
-                delay: 0.5,
+                delay: 0.15,
                 type: 'spring',
                 stiffness: 160,
                 damping: 12,
@@ -132,7 +142,6 @@ export function RevealUnlock({ onEquip, onRetry, onHover, onModifyParams, avatar
               />
             </motion.div>
 
-            {/* Sparkles */}
             <div className="reveal-unlock__particles">
               {sparkles.map((s) => (
                 <motion.div
@@ -159,31 +168,31 @@ export function RevealUnlock({ onEquip, onRetry, onHover, onModifyParams, avatar
             </div>
           </div>
 
-          {/* Aura name + CTAs stacked below character */}
-          <motion.div
-            className="reveal-unlock__cta-stack"
-            initial={{ y: 30, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 1.6, type: 'spring', stiffness: 150, damping: 18 }}
-          >
-            <div className="reveal-unlock__line1">
-              {auraName || 'Aura Generated Successfully'}
-            </div>
+          {/* CTAs stacked below character */}
+          <AnimatePresence>
+            {settled && (
+              <motion.div
+                className="reveal-unlock__cta-stack"
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.15, type: 'spring', stiffness: 150, damping: 18 }}
+              >
+                {isFallback && (
+                  <div className="reveal-unlock__fallback-notice">
+                    {auraError?.error || 'AI unavailable — showing element-based aura'}
+                  </div>
+                )}
 
-            {isFallback && (
-              <div className="reveal-unlock__fallback-notice">
-                {auraError?.error || 'AI unavailable — showing element-based aura'}
-              </div>
+                <button className="pixel-btn" onClick={onEquip} onMouseEnter={onHover}>
+                  Equip Aura
+                </button>
+                <button className="pixel-btn pixel-btn--ghost" onClick={onRetry} onMouseEnter={onHover}>
+                  Retry
+                </button>
+              </motion.div>
             )}
-
-            <button className="pixel-btn" onClick={onEquip} onMouseEnter={onHover}>
-              Equip Aura
-            </button>
-            <button className="pixel-btn pixel-btn--ghost" onClick={onRetry} onMouseEnter={onHover}>
-              Retry
-            </button>
-          </motion.div>
-        </div>
+          </AnimatePresence>
+        </motion.div>
       </div>
     </motion.div>
   );

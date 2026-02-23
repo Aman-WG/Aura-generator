@@ -51,7 +51,7 @@ export interface AuraParams {
   intensity: number;
 }
 
-export type EnergyFlowPattern = 'radial-out' | 'radial-in' | 'rise' | 'spiral' | 'pulse' | 'cascade';
+export type EnergyFlowPattern = 'radial-out' | 'radial-in' | 'rise' | 'spiral' | 'pulse' | 'cascade' | 'zigzag' | 'wave';
 export type ParticleStyle = 'ember' | 'sparkle' | 'debris' | 'lightning' | 'bubble' | 'orb';
 export type ParticleDrift = 'rise' | 'spiral' | 'burst' | 'float';
 

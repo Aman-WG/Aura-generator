@@ -1,8 +1,8 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { AuraCanvas } from './components/Stage/AuraCanvas';
 import { generateAuraParams, getFallbackParams } from './aura-engine/aura-ai';
 import type { AIProvider, AuraGenerationResult } from './aura-engine/aura-ai';
-import type { AuraParams } from './aura-engine/types';
+import type { AuraParams, EnergyFlowPattern } from './aura-engine/types';
 
 const ELEMENTS = ['fire', 'ice', 'void', 'thunder', 'nature'] as const;
 const ENERGIES = ['vortex', 'sonic', 'explode', 'pulse', 'glitch'] as const;
@@ -22,6 +22,17 @@ const ENERGY_META: Record<string, { emoji: string; label: string }> = {
   pulse: { emoji: '💓', label: 'PULSE' },
   glitch: { emoji: '👾', label: 'GLITCH' },
 };
+
+const PHYSICS_OPTIONS: Array<{ id: EnergyFlowPattern; label: string; icon: string }> = [
+  { id: 'spiral', label: 'Vortex', icon: '🌀' },
+  { id: 'rise', label: 'Rise Up', icon: '🔼' },
+  { id: 'radial-out', label: 'Explode', icon: '💥' },
+  { id: 'radial-in', label: 'Implode', icon: '🕳️' },
+  { id: 'cascade', label: 'Flow Down', icon: '🌊' },
+  { id: 'pulse', label: 'Pulse', icon: '💓' },
+  { id: 'zigzag', label: 'Zig Zag', icon: '⚡' },
+  { id: 'wave', label: 'Wave', icon: '〰️' },
+];
 
 const LS_KEY_GEMINI = 'aura_gemini_key';
 const LS_KEY_OPENAI = 'aura_openai_key';
@@ -43,6 +54,36 @@ export function AuraPlayground() {
   const [lastResult, setLastResult] = useState<AuraGenerationResult | null>(null);
   const [latency, setLatency] = useState<number | null>(null);
   const promptRef = useRef<HTMLInputElement>(null);
+
+  // Live-tweak overrides (null = use AI value)
+  const [ovSpeed, setOvSpeed] = useState<number | null>(null);
+  const [ovParticleSize, setOvParticleSize] = useState<number | null>(null);
+  const [ovPhysics, setOvPhysics] = useState<EnergyFlowPattern | null>(null);
+  const [ovNature, setOvNature] = useState<number | null>(null); // 0 = chaos, 100 = calm
+
+  const effectiveParams = useMemo<AuraParams | null>(() => {
+    if (!auraParams) return null;
+    const p: AuraParams = JSON.parse(JSON.stringify(auraParams));
+
+    if (ovSpeed !== null) {
+      p.flameContour.speed = ovSpeed;
+      p.energyFlow.speed = ovSpeed;
+    }
+    if (ovParticleSize !== null) {
+      p.particles.size = ovParticleSize;
+    }
+    if (ovPhysics !== null) {
+      p.energyFlow.pattern = ovPhysics;
+    }
+    if (ovNature !== null) {
+      const t = ovNature / 100;
+      p.flameContour.smoothness = 0.05 + t * 0.9;
+      p.flameContour.jaggedness = 0.9 - t * 0.75;
+      p.flameContour.speed = ovSpeed ?? (0.4 + (1.0 - t) * 1.2);
+    }
+
+    return p;
+  }, [auraParams, ovSpeed, ovParticleSize, ovPhysics, ovNature]);
 
   useEffect(() => {
     if (geminiKey) {
@@ -111,9 +152,9 @@ export function AuraPlayground() {
         {/* Preview area */}
         <div style={styles.previewArea}>
           <div style={styles.previewBg}>
-            {auraParams && (
+            {effectiveParams && (
               <AuraCanvas
-                params={auraParams}
+                params={effectiveParams}
                 width={400}
                 height={500}
                 frontOpacity={0.15}
@@ -127,12 +168,12 @@ export function AuraPlayground() {
               style={styles.qbitImg}
               draggable={false}
             />
-            {auraParams && auraParams.auraName && (
+            {effectiveParams && effectiveParams.auraName && (
               <div style={styles.auraNameOverlay}>
-                <div style={styles.auraNameText}>{auraParams.auraName}</div>
+                <div style={styles.auraNameText}>{effectiveParams.auraName}</div>
               </div>
             )}
-            {!auraParams && (
+            {!effectiveParams && (
               <div style={styles.placeholder}>
                 Generate an aura to see it here
               </div>
@@ -340,48 +381,6 @@ export function AuraPlayground() {
             )}
           </div>
 
-          {/* Element */}
-          <div style={styles.section}>
-            <label style={styles.label}>Element</label>
-            <div style={styles.pillRow}>
-              {ELEMENTS.map((el) => (
-                <button
-                  key={el}
-                  onClick={() => setElement(el)}
-                  style={{
-                    ...styles.pill,
-                    borderColor: element === el ? ELEMENT_META[el].color : '#333',
-                    background: element === el ? ELEMENT_META[el].color + '22' : 'transparent',
-                    color: element === el ? ELEMENT_META[el].color : '#888',
-                  }}
-                >
-                  {ELEMENT_META[el].emoji} {ELEMENT_META[el].label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Energy */}
-          <div style={styles.section}>
-            <label style={styles.label}>Energy</label>
-            <div style={styles.pillRow}>
-              {ENERGIES.map((en) => (
-                <button
-                  key={en}
-                  onClick={() => setEnergy(en)}
-                  style={{
-                    ...styles.pill,
-                    borderColor: energy === en ? '#00ff88' : '#333',
-                    background: energy === en ? '#00ff8822' : 'transparent',
-                    color: energy === en ? '#00ff88' : '#888',
-                  }}
-                >
-                  {ENERGY_META[en].emoji} {ENERGY_META[en].label}
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Prompt */}
           <div style={styles.section}>
             <label style={styles.label}>Aura Prompt</label>
@@ -394,6 +393,52 @@ export function AuraPlayground() {
               style={styles.input}
               maxLength={100}
             />
+          </div>
+
+          {/* Element + Energy row */}
+          <div style={{ display: 'flex', gap: 16 }}>
+            <div style={{ ...styles.section, flex: 1 }}>
+              <label style={styles.label}>Element</label>
+              <div style={styles.pillRow}>
+                {ELEMENTS.map((el) => (
+                  <button
+                    key={el}
+                    onClick={() => setElement(el)}
+                    style={{
+                      ...styles.pill,
+                      borderColor: element === el ? ELEMENT_META[el].color : '#333',
+                      background: element === el ? ELEMENT_META[el].color + '22' : 'transparent',
+                      color: element === el ? ELEMENT_META[el].color : '#888',
+                      padding: '4px 10px',
+                      fontSize: 11,
+                    }}
+                  >
+                    {ELEMENT_META[el].emoji} {ELEMENT_META[el].label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div style={{ ...styles.section, flex: 1 }}>
+              <label style={styles.label}>Energy</label>
+              <div style={styles.pillRow}>
+                {ENERGIES.map((en) => (
+                  <button
+                    key={en}
+                    onClick={() => setEnergy(en)}
+                    style={{
+                      ...styles.pill,
+                      borderColor: energy === en ? '#00ff88' : '#333',
+                      background: energy === en ? '#00ff8822' : 'transparent',
+                      color: energy === en ? '#00ff88' : '#888',
+                      padding: '4px 10px',
+                      fontSize: 11,
+                    }}
+                  >
+                    {ENERGY_META[en].emoji} {ENERGY_META[en].label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Actions */}
@@ -412,6 +457,98 @@ export function AuraPlayground() {
               FALLBACK
             </button>
           </div>
+
+          {/* ── Live Tweak Controls ─────────────────────────── */}
+          {auraParams && (
+            <>
+              <div style={styles.tweakDivider}>
+                <span style={styles.tweakDividerText}>TWEAK</span>
+              </div>
+
+              {/* Physics */}
+              <div style={styles.section}>
+                <label style={styles.label}>Physics</label>
+                <div style={styles.pillRow}>
+                  {PHYSICS_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.id}
+                      onClick={() => setOvPhysics(ovPhysics === opt.id ? null : opt.id)}
+                      style={{
+                        ...styles.physicsPill,
+                        borderColor: (ovPhysics ?? auraParams.energyFlow.pattern) === opt.id ? '#A855F7' : '#2a2a35',
+                        background: (ovPhysics ?? auraParams.energyFlow.pattern) === opt.id ? '#A855F722' : '#111118',
+                        color: (ovPhysics ?? auraParams.energyFlow.pattern) === opt.id ? '#D8B4FE' : '#666',
+                      }}
+                    >
+                      <span style={{ fontSize: 14 }}>{opt.icon}</span>
+                      <span>{opt.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Aura Nature slider */}
+              <div style={styles.section}>
+                <label style={styles.label}>Aura Nature</label>
+                <div style={styles.sliderRow}>
+                  <span style={styles.sliderLabel}>CHAOS</span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={ovNature ?? Math.round((auraParams.flameContour.smoothness) * 100)}
+                    onChange={(e) => setOvNature(Number(e.target.value))}
+                    style={styles.slider}
+                  />
+                  <span style={styles.sliderLabel}>CALM</span>
+                </div>
+              </div>
+
+              {/* Aura Speed slider */}
+              <div style={styles.section}>
+                <label style={styles.label}>
+                  Aura Speed
+                  <span style={styles.sliderValue}>
+                    {(ovSpeed ?? auraParams.flameContour.speed).toFixed(1)}x
+                  </span>
+                </label>
+                <input
+                  type="range"
+                  min={20}
+                  max={200}
+                  value={Math.round((ovSpeed ?? auraParams.flameContour.speed) * 100)}
+                  onChange={(e) => setOvSpeed(Number(e.target.value) / 100)}
+                  style={styles.slider}
+                />
+              </div>
+
+              {/* Particle Size slider */}
+              <div style={styles.section}>
+                <label style={styles.label}>
+                  Particle Size
+                  <span style={styles.sliderValue}>
+                    {(ovParticleSize ?? auraParams.particles.size).toFixed(1)}
+                  </span>
+                </label>
+                <input
+                  type="range"
+                  min={5}
+                  max={60}
+                  value={Math.round((ovParticleSize ?? auraParams.particles.size) * 10)}
+                  onChange={(e) => setOvParticleSize(Number(e.target.value) / 10)}
+                  style={styles.slider}
+                />
+              </div>
+
+              {/* Reset overrides */}
+              <button
+                onClick={() => { setOvSpeed(null); setOvParticleSize(null); setOvPhysics(null); setOvNature(null); }}
+                style={styles.resetBtn}
+              >
+                Reset Tweaks
+              </button>
+            </>
+          )}
 
           {/* Status */}
           {lastResult?.source === 'fallback' && lastResult.error && (
@@ -441,11 +578,11 @@ export function AuraPlayground() {
           )}
 
           {/* Raw params */}
-          {auraParams && (
+          {effectiveParams && (
             <details style={styles.details}>
               <summary style={styles.summary}>Raw AuraParams JSON</summary>
               <pre style={styles.pre}>
-                {JSON.stringify(auraParams, null, 2)}
+                {JSON.stringify(effectiveParams, null, 2)}
               </pre>
             </details>
           )}
@@ -753,6 +890,77 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '8px 12px',
     background: '#00ff8811',
     borderRadius: 8,
+  },
+  tweakDivider: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    margin: '4px 0',
+  },
+  tweakDividerText: {
+    fontSize: 10,
+    fontWeight: 700,
+    letterSpacing: 3,
+    color: '#A855F7',
+    whiteSpace: 'nowrap' as const,
+  },
+  physicsPill: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    gap: 2,
+    padding: '6px 10px',
+    borderRadius: 10,
+    border: '1px solid #2a2a35',
+    background: '#111118',
+    cursor: 'pointer',
+    fontSize: 10,
+    fontWeight: 600,
+    letterSpacing: 0.5,
+    transition: 'all 0.15s',
+    minWidth: 54,
+  },
+  sliderRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+  },
+  sliderLabel: {
+    fontSize: 10,
+    fontWeight: 700,
+    letterSpacing: 1,
+    color: '#555',
+    minWidth: 40,
+  },
+  sliderValue: {
+    marginLeft: 8,
+    fontSize: 10,
+    fontWeight: 400,
+    color: '#888',
+    letterSpacing: 0,
+    textTransform: 'none' as const,
+  },
+  slider: {
+    flex: 1,
+    height: 4,
+    WebkitAppearance: 'none' as any,
+    appearance: 'none' as any,
+    background: '#2a2a35',
+    borderRadius: 2,
+    outline: 'none',
+    cursor: 'pointer',
+    accentColor: '#A855F7',
+  },
+  resetBtn: {
+    padding: '6px 16px',
+    background: 'transparent',
+    border: '1px solid #2a2a35',
+    borderRadius: 8,
+    color: '#555',
+    fontSize: 11,
+    cursor: 'pointer',
+    alignSelf: 'flex-start' as const,
+    transition: 'all 0.15s',
   },
   details: {
     marginTop: 4,

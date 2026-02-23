@@ -1045,35 +1045,35 @@
   overflow: hidden;
 }
 
-/* Dark cinematic dim */
+/* Dark cinematic dim — extra dark so aura pops */
 .reveal-unlock__dim {
   position: absolute;
   inset: 0;
   background: radial-gradient(
-    ellipse at 50% 45%,
-    rgba(0, 0, 0, 0.55) 0%,
-    rgba(0, 0, 0, 0.88) 60%,
-    rgba(0, 0, 0, 0.94) 100%
+    ellipse at 55% 45%,
+    rgba(0, 0, 0, 0.78) 0%,
+    rgba(0, 0, 0, 0.92) 50%,
+    rgba(0, 0, 0, 0.97) 100%
   );
 }
 
-/* Two-column layout — modifiers left, character+CTAs right */
+/* Clean 50/50 split — modifiers left, character+CTAs right */
 .reveal-unlock__layout {
   position: absolute;
   inset: 0;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 24px;
-  padding: 24px 40px;
+  align-items: stretch;
   pointer-events: auto;
+  padding: 32px 48px;
+  gap: 32px;
 }
 
 .reveal-unlock__left {
-  flex: 0 0 260px;
+  flex: 1;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
+  padding-right: 16px;
   z-index: 10;
 }
 
@@ -1082,14 +1082,16 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  justify-content: center;
+  gap: 20px;
+  padding-left: 16px;
   z-index: 10;
 }
 
 .reveal-unlock__character-area {
   position: relative;
-  width: 360px;
-  height: 360px;
+  width: 320px;
+  height: 340px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1221,45 +1223,30 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  text-align: center;
+  gap: 10px;
   pointer-events: auto;
+  width: 100%;
+  max-width: 240px;
 }
 
-.reveal-unlock__line1 {
-  font-family: 'Press Start 2P', monospace;
-  font-size: 24px;
-  font-weight: 400;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: #ffffff;
-  text-shadow:
-    0 0 20px rgba(180, 74, 255, 0.8),
-    0 0 60px rgba(180, 74, 255, 0.4),
-    0 0 120px rgba(180, 74, 255, 0.2),
-    0 2px 4px rgba(0, 0, 0, 0.6);
+.reveal-unlock__cta-stack .pixel-btn,
+.reveal-unlock__cta-stack .pixel-btn--ghost {
+  width: 100%;
 }
 
 .reveal-unlock__fallback-notice {
   font-family: 'Press Start 2P', monospace;
-  font-size: 10px;
+  font-size: 8px;
   letter-spacing: 1px;
   color: #ff9f43;
   text-shadow: 0 0 8px rgba(255, 159, 67, 0.4);
-  padding: 6px 14px;
+  padding: 5px 12px;
   border: 1px solid rgba(255, 159, 67, 0.3);
   border-radius: 6px;
   background: rgba(255, 159, 67, 0.08);
-  max-width: 80%;
   text-align: center;
-  line-height: 1.6;
-}
-
-.reveal-unlock__cta-stack .pixel-btn {
-  width: 220px;
-}
-.reveal-unlock__cta-stack .pixel-btn--ghost {
-  width: 220px;
+  line-height: 1.5;
+  margin-bottom: 4px;
 }
 
 /* Ghost / secondary pixel button for Retry */
@@ -1670,12 +1657,12 @@
    ═══════════════════════════════════════════════════════════════ */
 
 .aura-modifiers {
-  width: 100%;
-  padding: 20px 16px;
-  background: rgba(0, 0, 0, 0.65);
-  border: 1px solid rgba(0, 255, 65, 0.2);
-  border-radius: 12px;
-  backdrop-filter: blur(8px);
+  width: 280px;
+  padding: 24px 20px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(0, 255, 65, 0.15);
+  border-radius: 14px;
+  backdrop-filter: blur(12px);
   pointer-events: auto;
 }
 
