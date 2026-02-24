@@ -144,7 +144,7 @@ export class AuraEngine {
         x: 0, y: 0, vx: 0, vy: 0,
         alpha: 0, size: 0, life: 0, maxLife: 0,
         rotation: 0, rotationSpeed: 0, active: false,
-        useSecondary: false, shapeIdx: -1, elementalShapeIdx: -1, customPathIdx: -1, emojiIdx: -1,
+        useSecondary: false, shapeIdx: -1, elementalShapeIdx: -1, customPathIdx: -1,
       });
     }
   }
@@ -264,12 +264,13 @@ export class AuraEngine {
 
         switch (pattern) {
           case 'spiral': {
-            // Strong tangential + slight outward = visible vortex spin
+            // Orbit around center + gentle outward expansion
             const tangX = Math.cos(pAngle + Math.PI * 0.5);
             const tangY = Math.sin(pAngle + Math.PI * 0.5);
-            pt.vx += tangX * 0.55 + normDx * 0.08;
-            pt.vy += tangY * 0.55 + normDy * 0.08;
-            pt.rotation += 2.5 * dt;
+            pt.vx += tangX * 0.45 + normDx * 0.12;
+            pt.vy += tangY * 0.45 + normDy * 0.12;
+            pt.vx *= 0.97;
+            pt.vy *= 0.97;
             break;
           }
           case 'rise': {
@@ -355,43 +356,34 @@ export class AuraEngine {
     pt.shapeIdx = -1;
     pt.elementalShapeIdx = -1;
     pt.customPathIdx = -1;
-    pt.emojiIdx = -1;
 
     const shapes = p.shapes;
     const elemental = p.elementalShapes;
-    const heroEmoji = p.heroEmoji;
-    const hasEmoji = heroEmoji && heroEmoji.length >= 2;
     const hasShapes = shapes && shapes.length > 0;
     const hasElemental = elemental && elemental.length > 0;
     const hasCustom = this.customPath2Ds.length > 0;
     const roll = Math.random();
 
-    // Emoji-first: emoji (55%) → custom SVG (10%) → elemental (15%) → thematic (10%) → generic (10%)
-    const emojiEnd = hasEmoji ? 0.55 : 0;
-    const customEnd = emojiEnd + (hasCustom ? 0.10 : 0);
-    const elementalEnd = customEnd + (hasElemental ? 0.15 : 0);
-    const thematicEnd = elementalEnd + (hasShapes ? 0.10 : 0);
+    // SVG hero (45%) → thematic library (20%) → elemental (20%) → generic (15%)
+    const customEnd = hasCustom ? 0.45 : 0;
+    const thematicEnd = customEnd + (hasShapes ? 0.20 : 0);
+    const elementalEnd = thematicEnd + (hasElemental ? 0.20 : 0);
 
-    if (roll < emojiEnd) {
-      pt.emojiIdx = Math.floor(Math.random() * 2);
-      pt.size = p.size * (7.0 + Math.random() * 4.0);
-      pt.maxLife = 4.5 + Math.random() * 3.0;
-      pt.rotationSpeed = (Math.random() - 0.5) * 0.08;
-    } else if (roll < customEnd) {
+    if (roll < customEnd) {
       pt.customPathIdx = Math.floor(Math.random() * this.customPath2Ds.length);
-      pt.size = p.size * (6.0 + Math.random() * 4.0);
-      pt.maxLife = 3.5 + Math.random() * 2.5;
-      pt.rotationSpeed = (Math.random() - 0.5) * 0.15;
+      pt.size = p.size * (7.0 + Math.random() * 5.0);
+      pt.maxLife = 4.0 + Math.random() * 3.0;
+      pt.rotationSpeed = (Math.random() - 0.5) * 0.12;
+    } else if (roll < thematicEnd) {
+      pt.shapeIdx = Math.floor(Math.random() * shapes!.length);
+      pt.size = p.size * (3.0 + Math.random() * 2.5);
+      pt.maxLife = 2.5 + Math.random() * 2.0;
+      pt.rotationSpeed = (Math.random() - 0.5) * 0.6;
     } else if (roll < elementalEnd) {
       pt.elementalShapeIdx = Math.floor(Math.random() * elemental!.length);
       pt.size = p.size * (1.5 + Math.random() * 1.5);
       pt.maxLife = 1.5 + Math.random() * 1.5;
       pt.rotationSpeed = (Math.random() - 0.5) * 1.5;
-    } else if (roll < thematicEnd) {
-      pt.shapeIdx = Math.floor(Math.random() * shapes!.length);
-      pt.size = p.size * (2.5 + Math.random() * 2.0);
-      pt.maxLife = 2.0 + Math.random() * 2.0;
-      pt.rotationSpeed = (Math.random() - 0.5) * 0.8;
     } else {
       pt.size = p.size * (0.5 + Math.random() * 0.6);
       pt.maxLife = 1.2 + Math.random() * 2.0;
@@ -405,11 +397,11 @@ export class AuraEngine {
     switch (physPattern) {
       case 'spiral': {
         const a = Math.random() * TAU;
-        const r = 15 + Math.random() * spread * 0.35;
+        const r = 10 + Math.random() * spread * 0.2;
         pt.x = this.cx + Math.cos(a) * r;
         pt.y = this.cy + Math.sin(a) * r;
-        pt.vx = Math.cos(a + Math.PI * 0.5) * 2.0;
-        pt.vy = Math.sin(a + Math.PI * 0.5) * 2.0;
+        pt.vx = Math.cos(a + Math.PI * 0.5) * 1.5 + Math.cos(a) * 0.4;
+        pt.vy = Math.sin(a + Math.PI * 0.5) * 1.5 + Math.sin(a) * 0.4;
         break;
       }
       case 'rise': {
@@ -567,7 +559,7 @@ export class AuraEngine {
     if (!ef || ef.intensity <= 0) return;
 
     const t = this.time * ef.speed;
-    const r = Math.min(this.w, this.h) * 0.35 * this.params.intensity;
+    const r = Math.min(this.w, this.h) * 0.32 * this.params.intensity;
     const baseColor = this.params.flameContour.baseColor;
     const tipColor = this.params.flameContour.tipColor;
 
@@ -708,17 +700,17 @@ export class AuraEngine {
   private drawOuterGlow(ctx: CanvasRenderingContext2D): void {
     const g = this.params.outerGlow;
     const pulse = 0.85 + 0.15 * Math.sin(this.time * 1.5);
-    // Cap glow radius to stay within the vignette safe zone
-    const r = Math.min(Math.max(this.w, this.h) * g.radius * this.params.intensity, Math.min(this.w, this.h) * 0.42);
+    // Keep glow well inside the flame contour so it doesn't bleed past the jagged strokes
+    const r = Math.min(Math.max(this.w, this.h) * g.radius * this.params.intensity * 0.82, Math.min(this.w, this.h) * 0.36);
 
     if (!this.outerGrad) {
       this.outerGrad = ctx.createRadialGradient(this.cx, this.cy, 0, this.cx, this.cy, r);
       this.outerGrad.addColorStop(0, g.color + '00');
-      this.outerGrad.addColorStop(0.35, g.color + '00');
-      this.outerGrad.addColorStop(0.55, g.color + '11');
-      this.outerGrad.addColorStop(0.70, g.color + '55');
-      this.outerGrad.addColorStop(0.82, g.color + '88');
-      this.outerGrad.addColorStop(0.93, g.color + '33');
+      this.outerGrad.addColorStop(0.30, g.color + '00');
+      this.outerGrad.addColorStop(0.50, g.color + '11');
+      this.outerGrad.addColorStop(0.65, g.color + '44');
+      this.outerGrad.addColorStop(0.78, g.color + '77');
+      this.outerGrad.addColorStop(0.90, g.color + '33');
       this.outerGrad.addColorStop(1, g.color + '00');
     }
 
@@ -734,15 +726,16 @@ export class AuraEngine {
   private drawInnerGlow(ctx: CanvasRenderingContext2D): void {
     const g = this.params.innerGlow;
     const pulse = 0.8 + 0.2 * Math.sin(this.time * 2.5);
-    const r = Math.min(Math.min(this.w, this.h) * g.radius * this.params.intensity, Math.min(this.w, this.h) * 0.38);
+    // Constrain inner glow to stay well within the flame contour
+    const r = Math.min(Math.min(this.w, this.h) * g.radius * this.params.intensity * 0.80, Math.min(this.w, this.h) * 0.32);
 
     if (!this.innerGrad) {
       this.innerGrad = ctx.createRadialGradient(this.cx, this.cy, 0, this.cx, this.cy, r);
       this.innerGrad.addColorStop(0, g.color + '00');
-      this.innerGrad.addColorStop(0.40, g.color + '00');
-      this.innerGrad.addColorStop(0.58, g.color + '22');
-      this.innerGrad.addColorStop(0.72, g.color + '77');
-      this.innerGrad.addColorStop(0.86, g.color + '44');
+      this.innerGrad.addColorStop(0.35, g.color + '00');
+      this.innerGrad.addColorStop(0.55, g.color + '22');
+      this.innerGrad.addColorStop(0.70, g.color + '66');
+      this.innerGrad.addColorStop(0.85, g.color + '33');
       this.innerGrad.addColorStop(1, g.color + '00');
     }
 
@@ -761,8 +754,11 @@ export class AuraEngine {
     // Target: aura contour at roughly 200% of character body.
     // Character ≈ 23% of canvas width, so aura half-width ≈ 0.23 × canvas.
     // With thickness=1, intensity=1 this yields ~200% char scale.
-    const baseW = this.w * 0.22 * f.thickness * intensity * scaleMul;
-    const baseH = this.h * 0.24 * intensity * scaleMul;
+    // 150% character scale floor: character ≈ 23% canvas, so 150% = 0.17 half-width
+    const minW = this.w * 0.17;
+    const minH = this.h * 0.19;
+    const baseW = Math.max(this.w * 0.242 * f.thickness * intensity * scaleMul, minW);
+    const baseH = Math.max(this.h * 0.264 * intensity * scaleMul, minH);
     const flameH = baseH * f.height;
     const t = this.time * f.speed;
     const pointCount = MAX_FLAME_POINTS;
@@ -824,16 +820,8 @@ export class AuraEngine {
       const phys = this.params.energyFlow?.pattern ?? 'radial-out';
       switch (phys) {
         case 'spiral': {
-          // Rotate the whole contour over time — visible spinning
-          const rotOff = t * 1.8;
-          const rotAngle = angle + rotOff;
-          const rIdx = ((rotAngle / TAU * 360 + 360) % 360) | 0;
-          const rCos = this.cos(rIdx);
-          const rSin = this.sin(rIdx);
-          rx = this.softCeil(rx, softCeilRx, hardCeilRx);
-          ry = this.softCeil(ry, softCeilRy, hardCeilRy);
-          points.push({ x: this.cx + rCos * rx, y: this.cy + rSin * ry });
-          continue;
+          // No contour rotation — keep boundary stable
+          break;
         }
         case 'rise': {
           const liftBias = isTop ? 1.0 + 0.25 * Math.sin(t * 2) : 0.8 - 0.15 * Math.sin(t * 2);
@@ -1127,23 +1115,15 @@ export class AuraEngine {
       if (!pt.active || pt.alpha <= 0) continue;
 
       const color = (pt.useSecondary && p.secondaryColor) ? p.secondaryColor : p.color;
-      const heroEmoji = p.heroEmoji;
 
-      // HERO: Emoji particle — instantly recognizable, large, glowing
-      if (pt.emojiIdx >= 0 && heroEmoji && heroEmoji[pt.emojiIdx]) {
-        ctx.globalAlpha = pt.alpha;
-        this.drawEmojiParticle(ctx, heroEmoji[pt.emojiIdx], pt.x, pt.y, pt.size, pt.rotation, color);
-        continue;
-      }
-
-      // Secondary: Custom AI-generated path particle
+      // HERO: Custom AI-generated SVG path particle — large, prominent
       if (pt.customPathIdx >= 0 && this.customPath2Ds[pt.customPathIdx]) {
-        ctx.globalAlpha = pt.alpha * 0.9;
+        ctx.globalAlpha = pt.alpha;
         drawCustomSVGPath(ctx, this.customPath2Ds[pt.customPathIdx], pt.x, pt.y, pt.size, pt.rotation, color);
         continue;
       }
 
-      ctx.globalAlpha = pt.alpha * 0.7;
+      ctx.globalAlpha = pt.alpha * 0.8;
 
       // Thematic library shape (small ambient icons)
       if (pt.shapeIdx >= 0 && shapes && shapes[pt.shapeIdx]) {
@@ -1187,40 +1167,6 @@ export class AuraEngine {
           this.drawEmber(ctx, pt, color);
       }
     }
-    ctx.restore();
-  }
-
-  private drawEmojiParticle(
-    ctx: CanvasRenderingContext2D,
-    emoji: string,
-    x: number,
-    y: number,
-    size: number,
-    rotation: number,
-    glowColor: string,
-  ): void {
-    const fontSize = size * 2.2;
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(rotation);
-
-    // Colored glow behind the emoji
-    ctx.shadowColor = glowColor;
-    ctx.shadowBlur = size * 3;
-
-    ctx.font = `${fontSize}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    // First pass: glow only (draw twice for stronger glow)
-    ctx.fillText(emoji, 0, 0);
-    ctx.fillText(emoji, 0, 0);
-
-    // Second pass: crisp emoji on top (reduced shadow)
-    ctx.shadowBlur = size;
-    ctx.fillText(emoji, 0, 0);
-
-    ctx.shadowBlur = 0;
     ctx.restore();
   }
 

@@ -102,34 +102,48 @@ Pick 1-2 shapes from these categories that match the aura's energy mood. These r
 - NATURE: petal, vine_curl
 - LIGHT/HOLY: star, light_ray
 
-★★★ HERO EMOJI PARTICLES — THE MOST IMPORTANT PART ★★★
-You MUST pick EXACTLY 2 emoji characters that are the most iconic, instantly recognizable symbols for the prompt. These render as LARGE glowing hero particles floating through the aura.
+★★★ CUSTOM SVG HERO PARTICLES — THE MOST IMPORTANT PART ★★★
+You MUST generate EXACTLY 2 SVG path "d" strings. These are the HERO particles — large glowing silhouettes that make the aura instantly recognizable.
 
-HOW TO PICK (think step by step):
-1. What is the #1 most universally recognized emoji for this subject?
-2. What is the #2 most iconic associated emoji?
+YOUR THINKING PROCESS (follow this chain exactly):
+1. "What real-world thing does this prompt refer to?" → character, object, concept, animal, brand, etc.
+2. "What is the #1 SYMBOL everyone associates with it?" → the logo, weapon, signature object, body part, item
+3. "What SIMPLE GEOMETRIC OUTLINE captures that symbol?" → reduce it to the fewest lines/arcs possible
+4. "Which recipe below is closest?" → adapt that recipe to your shape
 
-The emoji MUST be specific and on-theme. Examples of good picks:
-- Batman → 🦇 + 🌙    (bat + night moon)
-- Superman → 💪 + ⭐   (strength + star/super)  
-- Pikachu → ⚡ + 💛    (lightning + yellow heart)
-- Fire → 🔥 + 💥       (flame + explosion)
-- Pizza → 🍕 + 🧀      (pizza + cheese)
-- Wolf → 🐺 + 🌕       (wolf + full moon)
-- Guitar → 🎸 + 🎵     (guitar + music)
-- Ocean → 🌊 + 🐚      (wave + shell)
-- Dragon → 🐉 + 🔥     (dragon + fire)
-- Crown/King → 👑 + 💎  (crown + jewel)
-- Ninja → 🥷 + ⚔️      (ninja + swords)
-- Space → 🚀 + ⭐      (rocket + star)
-- Christmas → 🎄 + 🎅   (tree + santa)
-- Dinosaur → 🦖 + 🦴    (dino + bone)
+For Captain America → shield (circle with inner star) + star (5-pointed)
+For Spider-Man → spider silhouette (8 legs radiating from oval body) + web (concentric arcs with radial lines = too complex, use mask/face outline instead)
+For a Cat → pointed-ear head silhouette + paw print
+For a Race Car → side profile (low rectangle with wheel arcs) + checkered flag (simple grid)
+For a Wizard → pointed hat (triangle with brim) + wand with star tip
+For the Ocean → wave crest (wavy line with curl) + shell (spiral)
+For Pizza → slice (triangle with wavy top edge) + circular pie (circle with lines)
 
-RULES:
-- Pick emoji that EVERYONE would associate with the prompt
-- Prefer object/symbol emoji over face/person emoji (they read better as particles)
-- Each emoji must be a SINGLE character or emoji sequence
-- Do NOT pick generic emoji like ✨ or 💫 — be SPECIFIC to the prompt
+GEOMETRIC PRIMITIVES for 64×64 canvas:
+- LINES: M x,y L x,y — straight edges, good for stars, bolts, shields, triangles
+- ARCS: A rx,ry 0 large-flag sweep-flag x,y — circles, crescents, shields, wheels
+- CURVES: Q cx,cy ex,ey — organic bends: hearts, flames, waves, ears
+- CLOSE: Z — always end each closed sub-path with Z
+
+PROVEN RECIPES (copy and adapt — change coordinates to morph into your shape):
+STAR (5-pt):   M32,2 L39,22 L62,22 L43,36 L50,58 L32,44 L14,58 L21,36 L2,22 L25,22 Z
+BOLT:          M28,2 L36,24 L28,24 L38,62 L30,38 L36,38 Z
+SHIELD/CIRCLE: M32,4 A28,28,0,1,1,32,60 A28,28,0,1,1,32,4 Z
+CRESCENT:      M44,8 A24,24,0,1,0,44,56 A18,18,0,1,1,44,8 Z
+HEART:         M32,56 Q2,32,32,12 Q62,32,32,56 Z
+DIAMOND:       M32,4 L56,32 L32,60 L8,32 Z
+TRIANGLE:      M32,4 L58,56 L6,56 Z
+WING PAIR:     M32,32 L8,8 L2,28 L20,32 L2,36 L8,56 L32,32 L56,8 L62,28 L44,32 L62,36 L56,56 Z
+CROWN:         M8,48 L8,20 L20,32 L32,16 L44,32 L56,20 L56,48 Z
+PAW:           M32,38 A12,10,0,1,1,32,58 A12,10,0,1,1,32,38 Z M16,28 A6,6,0,1,1,16,40 A6,6,0,1,1,16,28 Z M48,28 A6,6,0,1,1,48,40 A6,6,0,1,1,48,28 Z M26,18 A5,5,0,1,1,26,28 A5,5,0,1,1,26,18 Z M38,18 A5,5,0,1,1,38,28 A5,5,0,1,1,38,18 Z
+
+CRITICAL RULES:
+- Shape must fill most of the 64×64 area — use coordinates from 4 to 60
+- Keep it SIMPLE: 40-200 chars per path string
+- Each path MUST start with M and end with Z
+- These render as SOLID COLORED SILHOUETTES with glow — only the OUTLINE matters
+- A 5-year-old should be able to identify the shape — if not, simplify more
+- Do NOT generate complex multi-hundred-char paths — they break and look like blobs
 
 SAFETY:
 - NEVER include violent, sexual, drug-related, or inappropriate themes
@@ -149,7 +163,7 @@ OUTPUT THIS EXACT JSON:
     "jaggedness": 0.1-1.0,
     "smoothness": 0.0-1.0,
     "height": 0.5-1.5,
-    "thickness": 0.3-1.0,
+    "thickness": 0.5-1.0,
     "dualLayer": true/false,
     "dualColor": "#hex or null"
   },
@@ -163,14 +177,14 @@ OUTPUT THIS EXACT JSON:
     "drift": "rise"|"spiral"|"burst"|"float",
     "shapes": ["thematic_id_1", "thematic_id_2"],
     "elementalShapes": ["elemental_id_1"],
-    "heroEmoji": ["🦇", "🌙"],
     "customPaths": [
-      { "name": "optional_svg_shape", "path": "M... SVG path ...Z" }
+      { "name": "shape_name_1", "path": "M... simple recognizable SVG path in 64x64 ...Z" },
+      { "name": "shape_name_2", "path": "M... simple recognizable SVG path in 64x64 ...Z" }
     ]
   },
   "lightning": { "enabled": true/false, "color": "#hex", "frequency": 0.1-0.5 },
   "energyFlow": { "pattern": "radial-out"|"radial-in"|"rise"|"spiral"|"pulse"|"cascade", "speed": 0.3-2.0, "intensity": 0.3-1.0 },
-  "intensity": 0.5-1.5
+  "intensity": 0.7-1.5
 }`;
 
 /**
@@ -196,7 +210,13 @@ function extractJSON(raw: string): string {
 function buildUserMessage(element: string, energy: string, prompt: string): string {
   return `Generate an aura for: "${prompt}"
 
-Use the EXACT signature colors and visual identity of whatever "${prompt}" refers to. Pick particle shapes that represent objects/symbols associated with it. Make it vivid and instantly recognizable.`;
+IMPORTANT — before generating JSON, think:
+1. What are the SIGNATURE COLORS of "${prompt}"? Use those exact colors.
+2. What is the #1 most iconic SYMBOL of "${prompt}"? Draw that as customPaths[0].
+3. What is the #2 associated object/symbol? Draw that as customPaths[1].
+4. Both SVG shapes must be SIMPLE silhouettes using the recipe patterns from your instructions.
+
+Make it vivid, instantly recognizable, and true to "${prompt}".`;
 }
 
 const VALID_STYLES: ParticleStyle[] = ['ember', 'sparkle', 'debris', 'lightning', 'bubble', 'orb'];
@@ -218,15 +238,6 @@ function sanitizeShapes(raw: unknown): string[] {
     .map(String)
     .filter((id) => VALID_SHAPE_IDS.includes(id))
     .slice(0, 3);
-}
-
-function sanitizeHeroEmoji(raw: unknown): [string, string] | undefined {
-  if (!Array.isArray(raw) || raw.length < 2) return undefined;
-  const a = String(raw[0]).trim();
-  const b = String(raw[1]).trim();
-  if (!a || !b || a.length > 10 || b.length > 10) return undefined;
-  console.log(`[AuraAI] Hero emoji: ${a} ${b}`);
-  return [a, b];
 }
 
 const SVG_PATH_CHARS = /^[MmLlHhVvCcSsQqTtAaZz0-9.,\s\-]+$/;
@@ -277,7 +288,7 @@ function sanitizeParams(raw: Record<string, unknown>): AuraParams {
       jaggedness: clamp(numOr(r.flameContour?.jaggedness, 0.5), 0.1, 1.0),
       smoothness: clamp(numOr(r.flameContour?.smoothness, 0.3), 0, 1.0),
       height: clamp(Number(r.flameContour?.height) || 1.0, 0.3, 2.0),
-      thickness: clamp(Number(r.flameContour?.thickness) || 0.6, 0.2, 1.0),
+      thickness: clamp(Number(r.flameContour?.thickness) || 0.7, 0.5, 1.0),
       dualLayer: Boolean(r.flameContour?.dualLayer),
       dualColor: r.flameContour?.dualColor ? String(r.flameContour.dualColor) : undefined,
     },
@@ -292,7 +303,6 @@ function sanitizeParams(raw: Record<string, unknown>): AuraParams {
       shapes: sanitizeShapes(r.particles?.shapes),
       elementalShapes: sanitizeShapes(r.particles?.elementalShapes),
       customPaths: sanitizeCustomPaths(r.particles?.customPaths),
-      heroEmoji: sanitizeHeroEmoji(r.particles?.heroEmoji),
     },
     lightning: {
       enabled: Boolean(r.lightning?.enabled),
@@ -304,7 +314,7 @@ function sanitizeParams(raw: Record<string, unknown>): AuraParams {
       speed: clamp(numOr(r.energyFlow?.speed, 0.8), 0.3, 2.0),
       intensity: clamp(numOr(r.energyFlow?.intensity, 0.6), 0.3, 1.0),
     },
-    intensity: clamp(Number(r.intensity) || 1.0, 0.3, 2.0),
+    intensity: clamp(Number(r.intensity) || 1.0, 0.7, 1.5),
   };
 }
 
@@ -316,7 +326,7 @@ export function getFallbackParams(element: string): AuraParams {
       innerGlow: { color: '#FF6600', intensity: 0.8, radius: 0.4 },
       outerGlow: { color: '#FF2200', intensity: 0.5, radius: 0.85 },
       flameContour: { baseColor: '#FF4500', tipColor: '#FFD700', speed: 1.2, jaggedness: 0.7, smoothness: 0.25, height: 1.2, thickness: 0.7, dualLayer: false },
-      particles: { color: '#FF6600', secondaryColor: '#FFD700', count: 35, size: 2.5, speed: 1.3, style: 'ember', drift: 'rise', shapes: ['flame', 'fire_breath'], elementalShapes: ['burning_splinter', 'fire_spark'], heroEmoji: ['🔥', '💥'] },
+      particles: { color: '#FF6600', secondaryColor: '#FFD700', count: 35, size: 2.5, speed: 1.3, style: 'ember', drift: 'rise', shapes: ['flame', 'fire_breath'], elementalShapes: ['burning_splinter', 'fire_spark'] },
       lightning: { enabled: false, color: '#FFFFFF', frequency: 0.2 },
       energyFlow: { pattern: 'rise', speed: 1.2, intensity: 0.7 },
       intensity: 1.1,
@@ -326,7 +336,7 @@ export function getFallbackParams(element: string): AuraParams {
       innerGlow: { color: '#FFFFFF', intensity: 0.7, radius: 0.35 },
       outerGlow: { color: '#00D4FF', intensity: 0.5, radius: 0.9 },
       flameContour: { baseColor: '#00BFFF', tipColor: '#E0F8FF', speed: 0.7, jaggedness: 0.4, smoothness: 0.6, height: 0.9, thickness: 0.6, dualLayer: false },
-      particles: { color: '#B0E0FF', secondaryColor: '#FFFFFF', count: 30, size: 2, speed: 0.6, style: 'sparkle', drift: 'float', shapes: ['snowflake', 'diamond'], elementalShapes: ['ice_shard'], heroEmoji: ['❄️', '🧊'] },
+      particles: { color: '#B0E0FF', secondaryColor: '#FFFFFF', count: 30, size: 2, speed: 0.6, style: 'sparkle', drift: 'float', shapes: ['snowflake', 'diamond'], elementalShapes: ['ice_shard'] },
       lightning: { enabled: false, color: '#FFFFFF', frequency: 0.2 },
       energyFlow: { pattern: 'cascade', speed: 0.6, intensity: 0.5 },
       intensity: 0.9,
@@ -336,7 +346,7 @@ export function getFallbackParams(element: string): AuraParams {
       innerGlow: { color: '#9B00FF', intensity: 0.8, radius: 0.45 },
       outerGlow: { color: '#4B0082', intensity: 0.6, radius: 0.9 },
       flameContour: { baseColor: '#8B00FF', tipColor: '#FF00FF', speed: 1.0, jaggedness: 0.8, smoothness: 0.15, height: 1.3, thickness: 0.8, dualLayer: true, dualColor: '#1A0030' },
-      particles: { color: '#CC66FF', secondaryColor: '#FF00FF', count: 40, size: 2, speed: 0.8, style: 'orb', drift: 'spiral', shapes: ['eye', 'skull'], elementalShapes: ['shadow_wisp'], heroEmoji: ['🔮', '👁️'] },
+      particles: { color: '#CC66FF', secondaryColor: '#FF00FF', count: 40, size: 2, speed: 0.8, style: 'orb', drift: 'spiral', shapes: ['eye', 'skull'], elementalShapes: ['shadow_wisp'] },
       lightning: { enabled: true, color: '#CC00FF', frequency: 0.15 },
       energyFlow: { pattern: 'radial-in', speed: 0.7, intensity: 0.8 },
       intensity: 1.2,
@@ -346,7 +356,7 @@ export function getFallbackParams(element: string): AuraParams {
       innerGlow: { color: '#FFFFFF', intensity: 0.9, radius: 0.35 },
       outerGlow: { color: '#FFD700', intensity: 0.6, radius: 0.85 },
       flameContour: { baseColor: '#FFD700', tipColor: '#FFFFFF', speed: 1.5, jaggedness: 0.9, smoothness: 0.1, height: 1.1, thickness: 0.6, dualLayer: false },
-      particles: { color: '#FFD700', secondaryColor: '#FFFFFF', count: 25, size: 2, speed: 1.5, style: 'lightning', drift: 'burst', shapes: ['lightning_bolt', 'bolt'], elementalShapes: ['electric_spark'], heroEmoji: ['⚡', '🌩️'] },
+      particles: { color: '#FFD700', secondaryColor: '#FFFFFF', count: 25, size: 2, speed: 1.5, style: 'lightning', drift: 'burst', shapes: ['lightning_bolt', 'bolt'], elementalShapes: ['electric_spark'] },
       lightning: { enabled: true, color: '#FFD700', frequency: 0.35 },
       energyFlow: { pattern: 'radial-out', speed: 1.5, intensity: 0.8 },
       intensity: 1.3,
@@ -356,7 +366,7 @@ export function getFallbackParams(element: string): AuraParams {
       innerGlow: { color: '#88FF88', intensity: 0.6, radius: 0.4 },
       outerGlow: { color: '#00AA44', intensity: 0.4, radius: 0.85 },
       flameContour: { baseColor: '#00FF88', tipColor: '#CCFF66', speed: 0.8, jaggedness: 0.35, smoothness: 0.7, height: 0.8, thickness: 0.7, dualLayer: false },
-      particles: { color: '#66FF66', secondaryColor: '#FFFF00', count: 30, size: 3, speed: 0.7, style: 'sparkle', drift: 'float', shapes: ['leaf', 'cherry_blossom'], elementalShapes: ['petal'], heroEmoji: ['🌿', '🌸'] },
+      particles: { color: '#66FF66', secondaryColor: '#FFFF00', count: 30, size: 3, speed: 0.7, style: 'sparkle', drift: 'float', shapes: ['leaf', 'cherry_blossom'], elementalShapes: ['petal'] },
       lightning: { enabled: false, color: '#FFFFFF', frequency: 0.2 },
       energyFlow: { pattern: 'pulse', speed: 0.6, intensity: 0.5 },
       intensity: 0.85,

@@ -39,8 +39,6 @@ export interface AuraParams {
     elementalShapes?: string[];
     /** AI-generated SVG path `d` strings for detailed contextual particles (64x64 viewBox) */
     customPaths?: Array<{ name: string; path: string }>;
-    /** 2 emoji characters that represent the prompt's most iconic symbols */
-    heroEmoji?: [string, string];
   };
   lightning: {
     enabled: boolean;
@@ -79,8 +77,6 @@ export interface Particle {
   elementalShapeIdx: number;
   /** Index into customPaths array (-1 = none) */
   customPathIdx: number;
-  /** Index into heroEmoji array (-1 = none) */
-  emojiIdx: number;
 }
 
 /** A point on the flame contour perimeter */

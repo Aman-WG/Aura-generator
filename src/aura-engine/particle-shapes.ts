@@ -940,21 +940,21 @@ export function drawCustomSVGPath(
   ctx.scale(scale, scale);
   ctx.translate(-32, -32);
 
-  // Outer glow pass
+  // Outer glow pass — wide colored bloom
   ctx.fillStyle = color;
   ctx.shadowColor = color;
-  ctx.shadowBlur = 25;
+  ctx.shadowBlur = 30;
   ctx.fill(path2d);
 
-  // Second fill for intensity
-  ctx.shadowBlur = 12;
+  // Second fill for stronger glow saturation
+  ctx.shadowBlur = 16;
   ctx.fill(path2d);
 
-  // Bright white-hot core
-  ctx.shadowBlur = 4;
+  // Inner bright core for readability
+  ctx.shadowBlur = 6;
   ctx.shadowColor = '#FFFFFF';
   ctx.fillStyle = '#FFFFFF';
-  ctx.globalAlpha *= 0.3;
+  ctx.globalAlpha *= 0.35;
   ctx.fill(path2d);
 
   ctx.shadowBlur = 0;
