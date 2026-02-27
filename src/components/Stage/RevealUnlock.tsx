@@ -1,22 +1,33 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { AuraParams } from '../../aura-engine/types';
+import type { SainathConfig } from '../../sainath-engine/types';
 import type { AuraError } from '../../hooks/useSynthesizer';
-import { AuraCanvas } from './AuraCanvas';
-import { AuraModifierPanel } from './AuraModifierPanel';
+import { SainathAuraCanvas } from './SainathAuraCanvas';
+import { AuraModifierPanel, type SainathModifiers } from './AuraModifierPanel';
 
 interface RevealUnlockProps {
   onEquip: () => void;
   onRetry: () => void;
   onHover?: () => void;
-  onModifyParams?: (updated: AuraParams) => void;
+  onModifyParams?: (mods: SainathModifiers) => void;
   avatarImageUrl?: string;
-  auraParams: AuraParams | null;
+  auraConfig: SainathConfig | null;
   auraError: AuraError | null;
 }
 
 const SPARKLE_COUNT = 14;
-const CENTER_HOLD = 400;
+
+/**
+ * Choreography:
+ *  0ms        – character+aura bounce in at screen center (0→150%→100%)
+ *               windmill halo spins behind
+ *  0–1200ms   – "wow" hold at center, nothing else visible
+ *  1200ms     – character+aura smoothly slide right & scale down
+ *               windmill fades out
+ *  ~1600ms    – modifier panel slides in from left, CTAs appear below character
+ */
+const CENTER_HOLD_MS = 1200;
+const SLIDE_DURATION_S = 0.5;
 
 const sparkles = Array.from({ length: SPARKLE_COUNT }, (_, i) => {
   const angle = (360 / SPARKLE_COUNT) * i;
@@ -26,14 +37,39 @@ const sparkles = Array.from({ length: SPARKLE_COUNT }, (_, i) => {
   return { angle, radius, size, delay, id: i };
 });
 
-export function RevealUnlock({ onEquip, onRetry, onHover, onModifyParams, avatarImageUrl, auraParams, auraError }: RevealUnlockProps) {
+export function RevealUnlock({ onEquip, onRetry, onHover, onModifyParams, avatarImageUrl, auraConfig, auraError }: RevealUnlockProps) {
   const isFallback = auraError?.source === 'fallback';
   const [settled, setSettled] = useState(false);
+  const [mods, setMods] = useState<SainathModifiers | null>(null);
 
   useEffect(() => {
-    const t = setTimeout(() => setSettled(true), CENTER_HOLD);
+    const t = setTimeout(() => setSettled(true), CENTER_HOLD_MS);
     return () => clearTimeout(t);
   }, []);
+
+  const handleModify = (m: SainathModifiers) => {
+    setMods(m);
+    onModifyParams?.(m);
+  };
+
+  const effectiveConfig = auraConfig
+    ? (() => {
+        if (!mods) return auraConfig;
+        const cfg: SainathConfig = JSON.parse(JSON.stringify(auraConfig));
+        const t = mods.nature / 100;
+        cfg.outerShape.smoothness = 0.05 + t * 0.9;
+        cfg.outerShape.jaggedness = 0.9 - t * 0.75;
+        cfg.outerShape.speed = mods.speed;
+        return cfg;
+      })()
+    : null;
+
+  const glowColor = auraConfig?.glowColor || '#a855f7';
+
+  const avatarDropShadow = useMemo(() => {
+    if (!auraConfig) return 'drop-shadow(0 8px 16px rgba(0,0,0,0.6))';
+    return `drop-shadow(0 0 30px ${glowColor}) drop-shadow(0 0 60px ${glowColor}80) drop-shadow(0 8px 16px rgba(0,0,0,0.6))`;
+  }, [auraConfig, glowColor]);
 
   return (
     <motion.div
@@ -43,157 +79,185 @@ export function RevealUnlock({ onEquip, onRetry, onHover, onModifyParams, avatar
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
     >
+      {/* Dark overlay */}
       <motion.div
         className="reveal-unlock__dim"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.8, ease: 'easeOut' }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
       />
 
-      <div className="reveal-unlock__layout">
-
-        {/* LEFT — Modifier panel (appears after character settles) */}
-        <div className="reveal-unlock__left">
-          <AnimatePresence>
-            {settled && auraParams && onModifyParams && (
-              <AuraModifierPanel
-                params={auraParams}
-                onModify={onModifyParams}
-                onHover={onHover}
-              />
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* RIGHT — Character + Aura + CTAs */}
+      {/* ─── Character+Aura — centered then slides right ─── */}
+      <div className="reveal-unlock__hero-wrap">
         <motion.div
-          className="reveal-unlock__right"
-          initial={{ x: '-25vw' }}
-          animate={{ x: settled ? 0 : '-25vw' }}
-          transition={{ duration: 0.3, ease: [0.42, 0, 0.58, 1] }}
+          className="reveal-unlock__hero"
+          initial={{ x: 0, scale: 1 }}
+          animate={{
+            x: settled ? '18vw' : 0,
+            scale: settled ? 0.82 : 1,
+          }}
+          transition={{
+            duration: SLIDE_DURATION_S,
+            ease: [0.42, 0, 0.58, 1],
+          }}
         >
-          <div className="reveal-unlock__character-area">
-            <motion.div
-              className="reveal-unlock__rays"
-              initial={{ opacity: 0, scale: 0.5, rotate: 0 }}
-              animate={{ opacity: [0, 0.7, 0.5], scale: 1.2, rotate: 360 }}
+          {/* Windmill halo — fades out when settled */}
+          <motion.div
+            className="reveal-unlock__windmill"
+            initial={{ opacity: 0, scale: 0.3, rotate: 0 }}
+            animate={{
+              opacity: settled ? 0 : [0, 0.8, 0.6],
+              scale: settled ? 0.6 : [0.3, 1.3, 1.1],
+              rotate: 360,
+            }}
+            transition={{
+              opacity: { duration: settled ? 0.4 : 0.8, ease: 'easeOut' },
+              scale: { duration: settled ? 0.4 : 0.9, type: 'spring', stiffness: 60, damping: 14 },
+              rotate: { duration: 12, repeat: Infinity, ease: 'linear' },
+            }}
+          />
+          <motion.div
+            className="reveal-unlock__windmill reveal-unlock__windmill--alt"
+            initial={{ opacity: 0, scale: 0.3, rotate: 30 }}
+            animate={{
+              opacity: settled ? 0 : [0, 0.5, 0.35],
+              scale: settled ? 0.6 : [0.3, 1.4, 1.2],
+              rotate: -330,
+            }}
+            transition={{
+              opacity: { duration: settled ? 0.35 : 1, ease: 'easeOut' },
+              scale: { duration: settled ? 0.35 : 1, type: 'spring', stiffness: 50, damping: 14 },
+              rotate: { duration: 18, repeat: Infinity, ease: 'linear' },
+            }}
+          />
+
+          {/* Subtle rays — persist after settle */}
+          <motion.div
+            className="reveal-unlock__rays"
+            initial={{ opacity: 0, scale: 0.5, rotate: 0 }}
+            animate={{
+              opacity: settled ? 0.2 : 0.45,
+              scale: settled ? 0.85 : 1.1,
+              rotate: 360,
+            }}
+            transition={{
+              opacity: { duration: 0.8, ease: 'easeOut' },
+              scale: { duration: 0.8, type: 'spring', stiffness: 50, damping: 12 },
+              rotate: { duration: 20, repeat: Infinity, ease: 'linear' },
+            }}
+          />
+
+          {/* Aura canvas */}
+          {effectiveConfig && (
+            <div className="reveal-unlock__center-aura">
+              <SainathAuraCanvas
+                config={effectiveConfig}
+                speedMultiplier={mods?.speed ?? 1.0}
+                sizeMultiplier={mods?.particleSize ?? 1.0}
+                densityMultiplier={mods?.density ?? 1.0}
+                movementOverride={mods?.movement ?? null}
+              />
+            </div>
+          )}
+
+          {/* Character with bounce entrance */}
+          <motion.div
+            className="reveal-unlock__character"
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: [0, 1.5, 1] }}
+            transition={{
+              opacity: { duration: 0.15 },
+              scale: {
+                duration: 0.5,
+                times: [0, 0.6, 1],
+                ease: [0.22, 1, 0.36, 1],
+              },
+            }}
+          >
+            <motion.img
+              src={avatarImageUrl || '/sprites/qbit-reveal.png'}
+              alt="Qbit with Aura"
+              className="reveal-unlock__img"
+              draggable={false}
+              style={{ filter: avatarDropShadow }}
+              animate={{ y: [0, -6, 0, 4, 0] }}
               transition={{
-                opacity: { duration: 1.2, delay: 0.2, ease: 'easeOut' },
-                scale: { duration: 1, delay: 0.2, type: 'spring', stiffness: 50, damping: 12 },
-                rotate: { duration: 20, repeat: Infinity, ease: 'linear' },
+                delay: 2,
+                duration: 4,
+                repeat: Infinity,
+                ease: 'easeInOut',
               }}
             />
+          </motion.div>
 
-            <motion.div
-              className="reveal-unlock__rays reveal-unlock__rays--alt"
-              initial={{ opacity: 0, scale: 0.5, rotate: 45 }}
-              animate={{ opacity: [0, 0.4, 0.3], scale: 1.3, rotate: -315 }}
-              transition={{
-                opacity: { duration: 1.4, delay: 0.3, ease: 'easeOut' },
-                scale: { duration: 1.2, delay: 0.3, type: 'spring', stiffness: 40, damping: 12 },
-                rotate: { duration: 30, repeat: Infinity, ease: 'linear' },
-              }}
-            />
-
-            {!auraParams && (
+          {/* Sparkles */}
+          <div className="reveal-unlock__particles">
+            {sparkles.map((s) => (
               <motion.div
-                className="reveal-unlock__glow"
+                key={s.id}
+                className="reveal-unlock__sparkle"
+                style={{
+                  width: s.size,
+                  height: s.size,
+                  left: `calc(50% + ${Math.cos((s.angle * Math.PI) / 180) * s.radius}%)`,
+                  top: `calc(50% + ${Math.sin((s.angle * Math.PI) / 180) * s.radius}%)`,
+                }}
                 initial={{ opacity: 0, scale: 0 }}
-                animate={{ opacity: [0, 1, 0.7], scale: [0, 1.6, 1.1] }}
-                transition={{ duration: 1, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-              />
-            )}
-
-            {auraParams && (
-              <AuraCanvas
-                params={auraParams}
-                width={700}
-                height={700}
-                frontOpacity={0.18}
-                backZIndex={1}
-                frontZIndex={4}
-              />
-            )}
-
-            <motion.div
-              className="reveal-unlock__character"
-              initial={{ opacity: 0, scale: 0.15, y: 60 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{
-                delay: 0.15,
-                type: 'spring',
-                stiffness: 160,
-                damping: 12,
-                mass: 0.8,
-              }}
-            >
-              <motion.img
-                src={avatarImageUrl || '/sprites/qbit-reveal.png'}
-                alt="Qbit with Aura"
-                className="reveal-unlock__img"
-                draggable={false}
-                animate={{ y: [0, -6, 0, 4, 0] }}
+                animate={{ opacity: [0, 1, 0], scale: [0, 1.5, 0] }}
                 transition={{
-                  delay: 1.5,
-                  duration: 4,
+                  delay: 0.1 + s.delay * 0.3,
+                  duration: 1.4,
                   repeat: Infinity,
+                  repeatDelay: Math.random() * 1.2,
                   ease: 'easeInOut',
                 }}
               />
-            </motion.div>
-
-            <div className="reveal-unlock__particles">
-              {sparkles.map((s) => (
-                <motion.div
-                  key={s.id}
-                  className="reveal-unlock__sparkle"
-                  style={{
-                    width: s.size,
-                    height: s.size,
-                    left: `calc(50% + ${Math.cos((s.angle * Math.PI) / 180) * s.radius}%)`,
-                    top: `calc(50% + ${Math.sin((s.angle * Math.PI) / 180) * s.radius}%)`,
-                    animationDelay: `${s.delay}s`,
-                  }}
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: [0, 1, 0], scale: [0, 1.2, 0] }}
-                  transition={{
-                    delay: 1 + s.delay,
-                    duration: 1.8,
-                    repeat: Infinity,
-                    repeatDelay: Math.random() * 1.5,
-                    ease: 'easeInOut',
-                  }}
-                />
-              ))}
-            </div>
+            ))}
           </div>
-
-          {/* CTAs stacked below character */}
-          <AnimatePresence>
-            {settled && (
-              <motion.div
-                className="reveal-unlock__cta-stack"
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.15, type: 'spring', stiffness: 150, damping: 18 }}
-              >
-                {isFallback && (
-                  <div className="reveal-unlock__fallback-notice">
-                    {auraError?.error || 'AI unavailable — showing element-based aura'}
-                  </div>
-                )}
-
-                <button className="pixel-btn" onClick={onEquip} onMouseEnter={onHover}>
-                  Equip Aura
-                </button>
-                <button className="pixel-btn pixel-btn--ghost" onClick={onRetry} onMouseEnter={onHover}>
-                  Retry
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </motion.div>
       </div>
+
+      {/* ─── Left panel — only mounts after settled ─── */}
+      <AnimatePresence>
+        {settled && auraConfig && onModifyParams && (
+          <motion.div
+            className="reveal-unlock__panel-dock"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+          >
+            <AuraModifierPanel
+              config={auraConfig}
+              onModify={handleModify}
+              onHover={onHover}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ─── CTAs — only mount after settled ─── */}
+      <AnimatePresence>
+        {settled && (
+          <motion.div
+            className="reveal-unlock__cta-dock"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2, type: 'spring', stiffness: 150, damping: 18 }}
+          >
+            {isFallback && (
+              <div className="reveal-unlock__fallback-notice">
+                {auraError?.error || 'AI unavailable — showing fallback aura'}
+              </div>
+            )}
+            <button className="pixel-btn pixel-btn--ghost" onClick={onRetry} onMouseEnter={onHover}>
+              Retry
+            </button>
+            <button className="pixel-btn" onClick={onEquip} onMouseEnter={onHover}>
+              Equip Aura
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

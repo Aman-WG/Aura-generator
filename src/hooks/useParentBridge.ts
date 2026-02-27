@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useRef, useState } from 'react';
-import type { AvatarPayload, AuraMessage, ParentMessage, AuraConfig, AuraParams } from '../types';
+import type { AvatarPayload, AuraMessage, ParentMessage, AuraConfig } from '../types';
 
 /**
  * Handles postMessage communication between the Aura Lab (iframe)
@@ -44,7 +44,7 @@ export function useParentBridge() {
   }, []);
 
   const sendEquipped = useCallback(
-    (auraConfig: AuraConfig, auraParams?: AuraParams) =>
+    (auraConfig: AuraConfig, auraParams?: unknown) =>
       send({ type: 'aura:equipped', payload: { auraConfig, auraParams } }),
     [send],
   );

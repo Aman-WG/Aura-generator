@@ -14,6 +14,7 @@
     "framer-motion": "^12.34.0",
     "lottie-react": "^2.4.1",
     "lucide-react": "^0.570.0",
+    "pixelarticons": "^2.0.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "tailwindcss": "^4.1.18",

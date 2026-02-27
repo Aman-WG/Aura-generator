@@ -9,19 +9,14 @@ import { useSynthesizer } from '../hooks/useSynthesizer';
 import { useBridge } from '../context/ParentBridgeContext';
 import { PHASE } from '../constants/phases';
 import { DIALOGUE } from '../constants/dialogue';
-import { generateAuraParams, getFallbackParams } from '../aura-engine/aura-ai';
-import type { AuraParams } from '../aura-engine/types';
+import { generateSainathAura, FALLBACK_CONFIG } from '../sainath-engine/sainath-ai';
+import type { SainathConfig } from '../sainath-engine/types';
+import type { SainathModifiers } from './Stage/AuraModifierPanel';
 
 const CONSOLE_ENTRANCE_DELAY = 800;
 const TYPEWRITER_START_DELAY = 600;
 const GENERATION_DURATION = 10000;
 
-/**
- * IDLE -> PROMPT -> PROCESSING -> REVEAL
- *
- * Robot arms + scanner fire during processing.
- * Reveal shows character on right + modifier controls on left.
- */
 export function Layout() {
   const synth = useSynthesizer();
   const sfx = useSound();
@@ -36,7 +31,7 @@ export function Layout() {
   const [armFireTrigger, setArmFireTrigger] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [attemptCount, setAttemptCount] = useState(1);
-  const [liveParams, setLiveParams] = useState<AuraParams | null>(null);
+  const [liveConfig, setLiveConfig] = useState<SainathConfig | null>(null);
 
   const handleIntroComplete = useCallback(() => {
     setShowIntro(false);
@@ -77,8 +72,6 @@ export function Layout() {
     onLineComplete: () => sfx.keystroke(),
   });
 
-  // ─── Handlers ──────────────────────────────────────────────
-
   const handleInitiate = useCallback(() => {
     sfx.initiate();
     setScannerVisible(true);
@@ -114,17 +107,16 @@ export function Layout() {
     const abort = new AbortController();
     aiAbortRef.current = abort;
 
-    const savedProvider = localStorage.getItem('aura_provider') ?? 'gemini';
     const apiKey =
-      savedProvider === 'portkey'
-        ? localStorage.getItem('aura_portkey_key') ?? ''
-        : savedProvider === 'openai'
-          ? localStorage.getItem('aura_openai_key') ?? ''
-          : localStorage.getItem('aura_gemini_key') ?? '';
+      localStorage.getItem('aura_portkey_key')
+      || localStorage.getItem('portkey_api_key')
+      || '';
+
+    console.log('[Layout] Portkey API key present:', !!apiKey, 'length:', apiKey.length);
 
     const aiPromise = apiKey
-      ? generateAuraParams('energy', 'surge', prompt, apiKey, savedProvider as 'gemini' | 'openai' | 'portkey')
-      : Promise.resolve({ params: getFallbackParams('energy'), source: 'fallback' as const, error: undefined });
+      ? generateSainathAura(prompt, apiKey)
+      : Promise.resolve({ config: FALLBACK_CONFIG, source: 'fallback' as const, error: 'No API key' });
 
     const timerPromise = new Promise<void>((r) => setTimeout(r, GENERATION_DURATION));
 
@@ -136,8 +128,8 @@ export function Layout() {
       sfx.stopTension();
       sfx.shatterReveal();
 
-      synth.setAuraParams(result.params);
-      setLiveParams(result.params);
+      synth.setAuraConfig(result.config);
+      setLiveConfig(result.config);
       synth.setAuraError({ source: result.source, error: result.error });
       synth.setShaking(false);
       setIsGenerating(false);
@@ -148,20 +140,20 @@ export function Layout() {
     });
   }, [sfx, synth]);
 
-  const handleModifyParams = useCallback((updated: AuraParams) => {
-    setLiveParams(updated);
+  const handleModifyParams = useCallback((_mods: SainathModifiers) => {
+    // Modifiers are applied directly in RevealUnlock via SainathAuraCanvas props
   }, []);
 
   const handleEquipAura = useCallback(() => {
     sfx.equip();
-    bridge.sendEquipped({ element: null, energy: null, chaosPrompt: synth.prompt }, liveParams ?? undefined);
-  }, [sfx, bridge, synth.prompt, liveParams]);
+    bridge.sendEquipped({ element: null, energy: null, chaosPrompt: synth.prompt }, undefined);
+  }, [sfx, bridge, synth.prompt]);
 
   const handleRetry = useCallback(() => {
     sfx.select();
     bridge.sendRetry();
     setAttemptCount((n) => n + 1);
-    setLiveParams(null);
+    setLiveConfig(null);
     synth.reset();
     setScannerVisible(false);
     setArmsEntered(false);
@@ -192,7 +184,7 @@ export function Layout() {
             onHover={sfx.hover}
             onModifyParams={handleModifyParams}
             avatarImageUrl={bridge.avatarData?.avatarImageUrl}
-            auraParams={liveParams}
+            auraConfig={liveConfig}
             auraError={synth.auraError}
           />
         </div>

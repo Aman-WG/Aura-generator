@@ -1,5 +1,6 @@
 export type { Phase } from '../constants/phases';
 export type { AuraParams } from '../aura-engine/types';
+export type { SainathConfig } from '../sainath-engine/types';
 
 export interface AuraConfig {
   element: string | null;
@@ -14,7 +15,7 @@ export interface AvatarPayload {
 
 export type AuraMessage =
   | { type: 'aura:ready' }
-  | { type: 'aura:equipped'; payload: { auraConfig: AuraConfig; auraParams?: AuraParams } }
+  | { type: 'aura:equipped'; payload: { auraConfig: AuraConfig; auraParams?: unknown } }
   | { type: 'aura:phase-change'; payload: { phase: string } }
   | { type: 'aura:retry' }
   | { type: 'aura:close' };
