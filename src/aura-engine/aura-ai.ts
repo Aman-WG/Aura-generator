@@ -257,7 +257,6 @@ function sanitizeCustomPaths(
     try {
       new Path2D(path);
       result.push({ name, path });
-      console.log(`[AuraAI] Custom path OK: "${name}" (${path.length} chars)`);
     } catch (e) {
       console.warn(`[AuraAI] Custom path FAILED: "${name}"`, e);
       continue;
@@ -394,7 +393,6 @@ async function callGeminiWithModel(
 ): Promise<{ res: Response; model: string }> {
   const trimmedKey = apiKey.trim();
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${trimmedKey}`;
-  console.log(`[AuraAI v4] Trying model: ${model} | Key: ${trimmedKey.slice(0, 10)}...${trimmedKey.slice(-4)} (${trimmedKey.length} chars)`);
 
   const body: Record<string, unknown> = {
     system_instruction: {
@@ -448,7 +446,6 @@ async function callGemini(apiKey: string, element: string, energy: string, promp
       continue;
     }
 
-    console.log(`[AuraAI v4] ${model} responded OK`);
     const data = await res.json();
 
     const candidate = data.candidates?.[0];
@@ -458,8 +455,6 @@ async function callGemini(apiKey: string, element: string, energy: string, promp
     }
 
     const text: string = candidate.content?.parts?.[0]?.text ?? '';
-    console.log('[AuraAI v3] Raw response:', text.slice(0, 200));
-    console.log('[AuraAI v3] Finish reason:', candidate.finishReason);
 
     if (!text) {
       throw new Error(`Empty Gemini response. Finish reason: ${candidate.finishReason}`);
@@ -508,7 +503,6 @@ const PORTKEY_URL = 'https://api.portkey.ai/v1/chat/completions';
 
 async function callPortkey(apiKey: string, element: string, energy: string, prompt: string): Promise<AuraParams> {
   const trimmedKey = apiKey.trim();
-  console.log(`[AuraAI v4] Portkey call | Model: ${PORTKEY_MODEL} | Key: ${trimmedKey.slice(0, 8)}...${trimmedKey.slice(-4)}`);
 
   const res = await fetch(PORTKEY_URL, {
     method: 'POST',
@@ -534,12 +528,10 @@ async function callPortkey(apiKey: string, element: string, energy: string, prom
   }
 
   const data = await res.json();
-  console.log('[AuraAI v4] Portkey response received');
   const content: string = data.choices?.[0]?.message?.content ?? '';
   if (!content) {
     throw new Error('Empty response from Portkey');
   }
-  console.log('[AuraAI v4] Portkey raw:', content.slice(0, 200));
   return sanitizeParams(JSON.parse(extractJSON(content)));
 }
 

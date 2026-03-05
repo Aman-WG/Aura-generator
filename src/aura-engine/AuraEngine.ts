@@ -79,18 +79,15 @@ export class AuraEngine {
     this.customPath2Ds = [];
     const raw = this.params.particles.customPaths;
     if (!raw || raw.length === 0) {
-      console.log('[AuraEngine] No custom paths provided');
       return;
     }
     for (const entry of raw) {
       try {
         this.customPath2Ds.push(new Path2D(entry.path));
-        console.log(`[AuraEngine] Custom path loaded: "${entry.name}" (${entry.path.length} chars)`);
       } catch {
         console.warn(`[AuraEngine] Invalid custom path: "${entry.name}"`);
       }
     }
-    console.log(`[AuraEngine] ${this.customPath2Ds.length}/${raw.length} custom paths active`);
   }
 
   start(): void {

@@ -1,7 +1,6 @@
 import { useRef, useEffect, useCallback, Fragment } from 'react';
 import { AuraEngine } from '../../aura-engine/AuraEngine';
 import type { AuraParams } from '../../aura-engine/types';
-// force full module refresh — engine v4 with energyFlow + smoothness + custom paths
 
 interface AuraCanvasProps {
   params: AuraParams | null;

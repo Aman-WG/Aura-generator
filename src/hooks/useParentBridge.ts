@@ -6,13 +6,17 @@ import type { AvatarPayload, AuraMessage, ParentMessage, AuraConfig } from '../t
  * and the Q-bit Shop (parent window).
  *
  * - Listens for avatar data from the parent
+ * - Listens for close requests from the parent
  * - Exposes a `send()` helper to post typed messages back
  * - Detects whether the app is running inside an iframe
  */
 export function useParentBridge() {
   const [avatarData, setAvatarData] = useState<AvatarPayload | null>(null);
   const [isEmbedded, setIsEmbedded] = useState(false);
+  const [closeRequested, setCloseRequested] = useState(false);
   const parentOriginRef = useRef<string>('*');
+
+  const clearCloseRequest = useCallback(() => setCloseRequested(false), []);
 
   useEffect(() => {
     const embedded = window.self !== window.top;
@@ -28,6 +32,9 @@ export function useParentBridge() {
 
       if (data.type === 'qbit:avatar-data') {
         setAvatarData(data.payload);
+      }
+      if (data.type === 'qbit:request-close') {
+        setCloseRequested(true);
       }
     };
 
@@ -60,6 +67,8 @@ export function useParentBridge() {
   return {
     isEmbedded,
     avatarData,
+    closeRequested,
+    clearCloseRequest,
     sendEquipped,
     sendPhaseChange,
     sendRetry,

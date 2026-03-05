@@ -1,5 +1,5 @@
 // Sainath Engine — Type Definitions
-// Ported from AruaTest-sainath/aura-studio/src/AuraStudio.jsx
+// Ported from AuraTest-sainath/aura-studio/src/AuraStudio.jsx
 
 export type ShapeType = 'circle' | 'ellipse' | 'rect' | 'triangle' | 'line' | 'arc' | 'polygon';
 

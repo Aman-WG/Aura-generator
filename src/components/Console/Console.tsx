@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import type { Phase } from '../../types';
 import { PHASE } from '../../constants/phases';
@@ -24,6 +25,9 @@ export function Console({
   onHover,
 }: ConsoleProps) {
   const isRow = phase === PHASE.IDLE;
+  const [promptError, setPromptError] = useState<string | null>(null);
+
+  const handlePromptError = (msg: string | null) => setPromptError(msg);
 
   return (
     <motion.div
@@ -36,13 +40,14 @@ export function Console({
       }}
     >
       <div className={`console__body ${isRow ? 'console__body--row' : ''}`}>
-        <DialogueBox lines={displayedLines} isTyping={isTyping} />
+        <DialogueBox lines={displayedLines} isTyping={isTyping} errorText={promptError} />
         <InteractionArea
           phase={phase}
           isTypingComplete={isTypingComplete}
           onInitiate={onInitiate}
           onGenerateAura={onGenerateAura}
           onHover={onHover}
+          onPromptError={handlePromptError}
         />
       </div>
     </motion.div>

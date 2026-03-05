@@ -3,6 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import { Stage } from './Stage';
 import { Console } from './Console';
 import { IntroSplash } from './IntroSplash';
+import { ConfirmExitModal } from './ConfirmExitModal';
 import { useTypewriter } from '../hooks/useTypewriter';
 import { useSound } from '../hooks/useSound';
 import { useSynthesizer } from '../hooks/useSynthesizer';
@@ -32,6 +33,51 @@ export function Layout() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [attemptCount, setAttemptCount] = useState(1);
   const [liveConfig, setLiveConfig] = useState<SainathConfig | null>(null);
+  const [showExitModal, setShowExitModal] = useState(false);
+  const phaseRef = useRef(synth.phase);
+  phaseRef.current = synth.phase;
+
+  // ── Dismiss handling ──
+  const requestDismiss = useCallback(() => {
+    const phase = phaseRef.current;
+    if (phase === PHASE.PROCESSING) {
+      bridge.clearCloseRequest();
+      return;
+    }
+    bridge.clearCloseRequest();
+    if (phase === PHASE.REVEAL) {
+      setShowExitModal(true);
+    } else {
+      bridge.sendClose();
+    }
+  }, [bridge]);
+
+  const handleSaveAndExit = useCallback(() => {
+    setShowExitModal(false);
+    sfx.equip();
+    bridge.sendEquipped({ element: null, energy: null, chaosPrompt: synth.prompt }, liveConfig);
+  }, [sfx, bridge, synth.prompt, liveConfig]);
+
+  const handleKeepTweaking = useCallback(() => {
+    setShowExitModal(false);
+  }, []);
+
+  useEffect(() => {
+    if (bridge.closeRequested) requestDismiss();
+  }, [bridge.closeRequested]);
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (showExitModal) {
+        setShowExitModal(false);
+        return;
+      }
+      requestDismiss();
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [requestDismiss, showExitModal]);
 
   const handleIntroComplete = useCallback(() => {
     setShowIntro(false);
@@ -111,8 +157,6 @@ export function Layout() {
       localStorage.getItem('aura_portkey_key')
       || localStorage.getItem('portkey_api_key')
       || '';
-
-    console.log('[Layout] Portkey API key present:', !!apiKey, 'length:', apiKey.length);
 
     const aiPromise = apiKey
       ? generateSainathAura(prompt, apiKey)
@@ -206,6 +250,15 @@ export function Layout() {
           </div>
         )}
       </div>
+
+      <AnimatePresence>
+        {showExitModal && (
+          <ConfirmExitModal
+            onSaveAndExit={handleSaveAndExit}
+            onKeepTweaking={handleKeepTweaking}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

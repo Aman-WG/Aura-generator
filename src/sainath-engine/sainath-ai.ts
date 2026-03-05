@@ -1,4 +1,4 @@
-// Ported from AruaTest-sainath 3-layer prompt system (AuraStudio.jsx lines 479-1474)
+// Ported from AuraTest-sainath 3-layer prompt system (AuraStudio.jsx lines 479-1474)
 // KEPT IN EXACT SYNC with Sainath's original — do not modify prompts without diffing
 
 import type { SainathConfig } from './types';
@@ -359,16 +359,12 @@ export async function generateSainathAura(
 
   try {
     const fullPrompt = buildFullPrompt(prompt);
-    console.log('[SainathAI] Calling Portkey with prompt length:', fullPrompt.length);
 
     const text = await callLLMText(fullPrompt, apiKey);
     if (!text) throw new Error('Empty response from API');
 
     const jsonStr = extractJSON(text);
     const config = JSON.parse(jsonStr) as SainathConfig;
-
-    console.log('[SainathAI] Generated:', config.name, '-', config.description);
-    console.log('[SainathAI] Entities:', config.entities?.length, 'Density:', config.density);
 
     return { config, source: 'ai' };
   } catch (e) {

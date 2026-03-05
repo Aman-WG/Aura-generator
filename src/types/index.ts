@@ -21,4 +21,5 @@ export type AuraMessage =
   | { type: 'aura:close' };
 
 export type ParentMessage =
-  | { type: 'qbit:avatar-data'; payload: AvatarPayload };
+  | { type: 'qbit:avatar-data'; payload: AvatarPayload }
+  | { type: 'qbit:request-close' };

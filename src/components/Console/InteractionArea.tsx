@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Phase } from '../../types';
 import { PHASE } from '../../constants/phases';
+import { checkPrompt } from '../../utils/contentFilter';
 
 const PROMPT_LIMIT = 30;
 
@@ -26,6 +27,7 @@ interface InteractionAreaProps {
   onInitiate: () => void;
   onGenerateAura: (prompt: string) => void;
   onHover?: () => void;
+  onPromptError?: (msg: string | null) => void;
 }
 
 const slideIn = {
@@ -41,6 +43,7 @@ export function InteractionArea({
   onInitiate,
   onGenerateAura,
   onHover,
+  onPromptError,
 }: InteractionAreaProps) {
   return (
     <div className="interaction-area">
@@ -62,7 +65,7 @@ export function InteractionArea({
 
         {phase === PHASE.PROMPT && isTypingComplete && (
           <motion.div key="prompt" className="interaction-area__content" {...slideIn}>
-            <PromptInputUI onGenerate={onGenerateAura} onHover={onHover} />
+            <PromptInputUI onGenerate={onGenerateAura} onHover={onHover} onPromptError={onPromptError} />
           </motion.div>
         )}
 
@@ -81,9 +84,10 @@ export function InteractionArea({
   );
 }
 
-function PromptInputUI({ onGenerate, onHover }: { onGenerate: (prompt: string) => void; onHover?: () => void }) {
+function PromptInputUI({ onGenerate, onHover, onPromptError }: { onGenerate: (prompt: string) => void; onHover?: () => void; onPromptError?: (msg: string | null) => void }) {
   const [text, setText] = useState('');
   const [placeholderIdx, setPlaceholderIdx] = useState(() => Math.floor(Math.random() * PLACEHOLDERS.length));
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -92,12 +96,28 @@ function PromptInputUI({ onGenerate, onHover }: { onGenerate: (prompt: string) =
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    if (hasError) {
+      setHasError(false);
+      onPromptError?.(null);
+    }
+  }, [text]);
+
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
   const overLimit = wordCount > PROMPT_LIMIT;
 
   const handleSubmit = () => {
     if (overLimit) return;
-    onGenerate(text.trim() || 'pure chaos energy');
+    const prompt = text.trim() || 'pure chaos energy';
+    const result = checkPrompt(prompt);
+    if (!result.ok) {
+      setHasError(true);
+      onPromptError?.(result.reason ?? 'Invalid prompt');
+      return;
+    }
+    setHasError(false);
+    onPromptError?.(null);
+    onGenerate(prompt);
   };
 
   return (
@@ -106,7 +126,7 @@ function PromptInputUI({ onGenerate, onHover }: { onGenerate: (prompt: string) =
         <div className="prompt-ui__input-wrap">
           <input
             type="text"
-            className="prompt-ui__input"
+            className={`prompt-ui__input${hasError ? ' prompt-ui__input--error' : ''}`}
             placeholder={PLACEHOLDERS[placeholderIdx]}
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -144,6 +164,10 @@ function PromptInputUI({ onGenerate, onHover }: { onGenerate: (prompt: string) =
             {p.label}
           </motion.button>
         ))}
+      </div>
+
+      <div className="prompt-ui__disclaimer">
+        👀 Heads up — prompts are logged and visible to your teacher. Keep it legendary, not sus.
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-// Ported from AruaTest-sainath Particle class (AuraStudio.jsx lines 517-1226)
+// Ported from AuraTest-sainath Particle class (AuraStudio.jsx lines 517-1226)
 
 import type { SainathConfig, EntityConfig, ShapeConfig, Movement, MovementObject } from './types';
 

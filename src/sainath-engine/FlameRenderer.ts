@@ -1,4 +1,4 @@
-// Ported from AruaTest-sainath FlameContourRenderer (AuraStudio.jsx lines 165-477)
+// Ported from AuraTest-sainath FlameContourRenderer (AuraStudio.jsx lines 165-477)
 
 import type { OuterShapeConfig } from './types';
 

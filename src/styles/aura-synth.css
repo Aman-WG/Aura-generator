@@ -440,30 +440,6 @@
   100% { transform: scale(1.3); opacity: 1; }
 }
 
-/* ── Canvas Aura (replaces CSS rings when active) ───────────── */
-
-.aura-canvas-wrap {
-  position: absolute;
-  inset: -100px;
-  z-index: 1;
-  pointer-events: none;
-  will-change: transform;
-}
-
-.aura-canvas-back,
-.aura-canvas-front {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
-
-.aura-canvas-front {
-  opacity: 0.18;
-}
-
 
 /* ═══════════════════════════════════════════════════════════════
    6. CONSOLE — RPG Dialogue Panel
@@ -540,15 +516,20 @@
     0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
+.dialogue-line--error .dialogue-line__text {
+  color: #ff6b6b;
+  text-shadow:
+    0 0 6px rgba(255, 68, 68, 0.6),
+    0 0 20px rgba(255, 68, 68, 0.2),
+    0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
 .dialogue-cursor {
   color: rgba(0, 255, 65, 0.7);
   font-weight: normal;
   margin-left: 1px;
 }
 
-.dialogue-cursor--idle {
-  color: rgba(0, 255, 65, 0.35);
-}
 
 
 /* ═══════════════════════════════════════════════════════════════
@@ -590,94 +571,7 @@
 
 
 /* ═══════════════════════════════════════════════════════════════
-   9. GLITCH BUTTON — The "Juicy" CTA
-   ═══════════════════════════════════════════════════════════════ */
-
-.glitch-btn {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px 32px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-family: var(--font-display);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  overflow: hidden;
-  transition: box-shadow 0.3s;
-}
-
-.glitch-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.glitch-btn--primary {
-  background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
-  color: #0a0a0f;
-  box-shadow:
-    0 0 20px rgba(0, 255, 136, 0.4),
-    0 4px 15px rgba(0, 0, 0, 0.3);
-}
-
-.glitch-btn--primary:hover:not(:disabled) {
-  box-shadow:
-    0 0 30px rgba(0, 255, 136, 0.6),
-    0 0 60px rgba(0, 255, 136, 0.2),
-    0 6px 20px rgba(0, 0, 0, 0.4);
-}
-
-.glitch-btn--secondary {
-  background: linear-gradient(135deg, #00b4ff 0%, #0088cc 100%);
-  color: #0a0a0f;
-  box-shadow:
-    0 0 20px rgba(0, 180, 255, 0.4),
-    0 4px 15px rgba(0, 0, 0, 0.3);
-}
-
-.glitch-btn--danger {
-  background: linear-gradient(135deg, #ff3344 0%, #cc2233 100%);
-  color: #fff;
-  box-shadow:
-    0 0 20px rgba(255, 50, 68, 0.4),
-    0 4px 15px rgba(0, 0, 0, 0.3);
-}
-
-.glitch-btn__text {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-}
-
-.glitch-btn__glare {
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(
-    45deg,
-    transparent 40%,
-    rgba(255, 255, 255, 0.15) 50%,
-    transparent 60%
-  );
-  animation: btn-glare 3s ease-in-out infinite;
-  pointer-events: none;
-}
-
-@keyframes btn-glare {
-  0%, 100% { transform: translateX(-100%); }
-  50% { transform: translateX(100%); }
-}
-
-
-/* ═══════════════════════════════════════════════════════════════
-   10. PIXEL BUTTON — Neo retro sci-fi neon yellow CTA
+   9. PIXEL BUTTON — Neo retro sci-fi neon yellow CTA
    ═══════════════════════════════════════════════════════════════ */
 
 .pixel-btn {
@@ -807,183 +701,12 @@
 
 
 /* ═══════════════════════════════════════════════════════════════
-   11. CONFIGURATION UI — Slot pill selector
+   11. INTERACTION AREA — layout helpers
    ═══════════════════════════════════════════════════════════════ */
-
-.config-ui {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
-  width: 100%;
-}
-
-.config-ui__step-label {
-  font-family: var(--font-mono);
-  font-size: 14px;
-  color: rgba(0, 255, 65, 0.7);
-  text-shadow: 0 0 4px rgba(0, 255, 65, 0.2);
-  letter-spacing: 0.3px;
-}
-
-.config-ui__pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.pill-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border: 1px solid rgba(0, 255, 65, 0.2);
-  border-radius: 20px;
-  background: rgba(0, 255, 65, 0.05);
-  color: #00ff41;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  text-shadow: 0 0 4px rgba(0, 255, 65, 0.3);
-  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
-}
-
-.pill-btn:hover {
-  background: rgba(0, 255, 65, 0.12);
-  border-color: rgba(0, 255, 65, 0.4);
-  box-shadow: 0 0 10px rgba(0, 255, 65, 0.15);
-}
-
-.pill-btn--active {
-  background: rgba(180, 74, 255, 0.25);
-  border-color: rgba(180, 74, 255, 0.6);
-  box-shadow: 0 0 12px rgba(180, 74, 255, 0.3);
-  color: #ffffff;
-}
-
-.pill-btn__emoji {
-  font-size: 14px;
-  line-height: 1;
-}
-
-.pill-btn__label {
-  line-height: 1;
-}
-
-
-/* ═══════════════════════════════════════════════════════════════
-   11. CHAOS INPUT — shared input style
-   ═══════════════════════════════════════════════════════════════ */
-
-.chaos-ui__input {
-  flex: 1;
-  min-width: 0;
-  padding: 9px 14px;
-  border: 1px solid rgba(0, 255, 65, 0.2);
-  border-radius: 6px;
-  background: rgba(0, 255, 65, 0.04);
-  color: #00ff41;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  outline: none;
-  text-shadow: 0 0 4px rgba(0, 255, 65, 0.3);
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.chaos-ui__input::placeholder {
-  color: rgba(0, 255, 65, 0.25);
-  font-style: italic;
-}
-
-.chaos-ui__input:focus {
-  border-color: rgba(0, 255, 65, 0.5);
-  box-shadow: 0 0 16px rgba(0, 255, 65, 0.12);
-}
-
-
-/* ═══════════════════════════════════════════════════════════════
-   12. INTERACTION AREA — layout helpers
-   ═══════════════════════════════════════════════════════════════ */
-
-.interaction-area__content--row {
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-}
 
 .interaction-area__content--center {
   align-items: center;
   justify-content: center;
-}
-
-.interaction-area__label {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: rgba(0, 255, 65, 0.55);
-  text-shadow: 0 0 4px rgba(0, 255, 65, 0.15);
-  line-height: 1.4;
-  flex: 1;
-  min-width: 0;
-}
-
-.pill-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-
-/* ═══════════════════════════════════════════════════════════════
-   12b. CHAOS INPUT UI — text field + generate button
-   ═══════════════════════════════════════════════════════════════ */
-
-.chaos-ui {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: 100%;
-}
-
-.chaos-ui__row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-}
-
-.chaos-ui__input-wrap {
-  flex: 1;
-  min-width: 0;
-  position: relative;
-}
-
-.chaos-ui__input-wrap .chaos-ui__input {
-  width: 100%;
-  padding-right: 60px;
-}
-
-.chaos-ui__wc {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: rgba(0, 255, 65, 0.3);
-  pointer-events: none;
-}
-
-.chaos-ui__wc--over {
-  color: var(--neon-red);
-}
-
-.chaos-ui__hint {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: rgba(0, 255, 65, 0.3);
-  text-shadow: 0 0 4px rgba(0, 255, 65, 0.1);
 }
 
 
@@ -1297,22 +1020,6 @@
     0 0 14px 4px rgba(180, 74, 255, 0.5);
 }
 
-/* CTA stack below character (vertical) */
-.reveal-unlock__cta-stack {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  pointer-events: auto;
-  width: 100%;
-  max-width: 240px;
-}
-
-.reveal-unlock__cta-stack .pixel-btn,
-.reveal-unlock__cta-stack .pixel-btn--ghost {
-  width: 100%;
-}
-
 .reveal-unlock__fallback-notice {
   font-family: 'Press Start 2P', monospace;
   font-size: 8px;
@@ -1353,39 +1060,7 @@
 
 
 /* ═══════════════════════════════════════════════════════════════
-   14. PHASE INDICATOR (Dev helper)
-   ═══════════════════════════════════════════════════════════════ */
-
-.phase-indicator {
-  position: absolute;
-  top: 8px;
-  right: 12px;
-  z-index: 100;
-  display: flex;
-  gap: 8px;
-}
-
-.phase-dot {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  color: rgba(255, 255, 255, 0.2);
-  letter-spacing: 1px;
-  padding: 2px 8px;
-  border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.3s;
-}
-
-.phase-dot--active {
-  color: var(--neon-green);
-  border-color: var(--neon-green);
-  background: rgba(0, 255, 136, 0.1);
-  box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
-}
-
-
-/* ═══════════════════════════════════════════════════════════════
-   15. RESPONSIVE SCALING — Fit to any screen
+   14. RESPONSIVE SCALING — Fit to any screen
    ═══════════════════════════════════════════════════════════════ */
 
 @media (max-width: 1300px) {
@@ -1730,6 +1405,42 @@
   box-shadow: 0 0 10px rgba(0, 255, 65, 0.2);
 }
 
+/* Error input border flash */
+.prompt-ui__input--error {
+  border-color: #ff4444 !important;
+  box-shadow: 0 0 12px rgba(255, 68, 68, 0.3) !important;
+  animation: prompt-error-shake 0.35s ease;
+}
+
+@keyframes prompt-error-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(3px); }
+}
+
+/* Error message */
+.prompt-ui__error {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: #ff6b6b;
+  text-shadow: 0 0 8px rgba(255, 68, 68, 0.4);
+  padding: 4px 0;
+  line-height: 1.6;
+}
+
+/* Teacher disclaimer */
+.prompt-ui__disclaimer {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: rgba(255, 255, 255, 0.3);
+  line-height: 1.7;
+  letter-spacing: 0.3px;
+  text-align: center;
+  padding-top: 2px;
+}
+
 
 /* ═══════════════════════════════════════════════════════════════
    21. AURA MODIFIER PANEL  (Figma-aligned)
@@ -1963,4 +1674,94 @@
     transparent 6px
   );
   border: none;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   22. CONFIRM EXIT MODAL
+   ═══════════════════════════════════════════════════════════════ */
+
+.exit-modal__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+}
+
+.exit-modal {
+  width: 460px;
+  max-width: 90vw;
+  padding: 32px 32px 28px;
+  background: linear-gradient(150deg, rgba(111, 111, 111, 0.9) 0.2%, rgba(9, 9, 9, 0.95) 7.7%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  backdrop-filter: blur(8px);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  overflow: hidden;
+}
+
+.exit-modal__icon {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.exit-modal__title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #fff;
+  margin: 0;
+  letter-spacing: -0.2px;
+}
+
+.exit-modal__body {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0;
+}
+
+.exit-modal__actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.exit-modal__actions .pixel-btn,
+.exit-modal__actions .pixel-btn--ghost {
+  flex: 1;
+  white-space: nowrap;
+  padding: 12px 16px;
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  box-shadow:
+    -3px 0 0 0 #b89f00,
+    3px 0 0 0 #b89f00,
+    0 -3px 0 0 #b89f00,
+    0 3px 0 0 #b89f00,
+    0 0 12px rgba(255, 228, 48, 0.4);
+  animation: none;
+}
+
+.exit-modal__actions .pixel-btn:hover {
+  box-shadow:
+    -3px 0 0 0 #ccb300,
+    3px 0 0 0 #ccb300,
+    0 -3px 0 0 #ccb300,
+    0 3px 0 0 #ccb300,
+    0 0 20px rgba(255, 228, 48, 0.5);
+}
+
+.exit-modal__actions .pixel-btn--ghost {
+  box-shadow: none;
 }
