@@ -28,6 +28,10 @@ interface InteractionAreaProps {
   onGenerateAura: (prompt: string) => void;
   onHover?: () => void;
   onPromptError?: (msg: string | null) => void;
+  coinBalance?: number | null;
+  initiateCost: number;
+  canAffordInitiation: boolean;
+  isInitiatingCharge: boolean;
 }
 
 const slideIn = {
@@ -44,22 +48,73 @@ export function InteractionArea({
   onGenerateAura,
   onHover,
   onPromptError,
+  coinBalance,
+  initiateCost,
+  canAffordInitiation,
+  isInitiatingCharge,
 }: InteractionAreaProps) {
+  const hasWallet = typeof coinBalance === 'number';
+  const shortfall = hasWallet ? Math.max(0, initiateCost - coinBalance) : 0;
+
   return (
     <div className="interaction-area">
       <AnimatePresence mode="wait">
         {phase === PHASE.IDLE && isTypingComplete && (
           <motion.div key="idle" className="interaction-area__content interaction-area__content--center" {...slideIn}>
-            <motion.button
-              className="pixel-btn pixel-btn--lg"
-              onClick={onInitiate}
-              onMouseEnter={onHover}
-              whileHover={{ scale: 1.06, y: -3 }}
-              whileTap={{ scale: 0.94 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-            >
-              <span style={{ fontSize: '1.8em', lineHeight: 1 }}>☢</span> INITIATE AURA GENERATION <span style={{ fontSize: '1.8em', lineHeight: 1 }}>☢</span>
-            </motion.button>
+            <div className="idle-cta">
+              <AnimatePresence>
+                {isInitiatingCharge && (
+                  <motion.div
+                    className="idle-cta__debit"
+                    initial={{ opacity: 0, x: 0, y: 0, scale: 0.95 }}
+                    animate={{
+                      opacity: [0, 1, 1, 0],
+                      x: [0, 42, 120, 220],
+                      y: [0, -18, -54, -138],
+                      scale: [0.95, 1.04, 0.98, 0.86],
+                    }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.9, ease: 'easeOut', times: [0, 0.2, 0.6, 1] }}
+                  >
+                    <span className="idle-cta__debit-burst">- {initiateCost.toLocaleString()} COINS</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <motion.button
+                className={`pixel-btn pixel-btn--lg ${(!canAffordInitiation || isInitiatingCharge) ? 'pixel-btn--disabled' : ''}`}
+                onClick={onInitiate}
+                onMouseEnter={canAffordInitiation && !isInitiatingCharge ? onHover : undefined}
+                disabled={!canAffordInitiation || isInitiatingCharge}
+                whileHover={canAffordInitiation && !isInitiatingCharge ? { scale: 1.06, y: -3 } : undefined}
+                whileTap={canAffordInitiation && !isInitiatingCharge ? { scale: 0.94 } : undefined}
+                transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+              >
+                <span style={{ fontSize: '1.8em', lineHeight: 1 }}>☢</span>{' '}
+                {isInitiatingCharge
+                  ? `DEBITING ${initiateCost.toLocaleString()} COINS...`
+                  : `INITIATE AURA GENERATION • ${initiateCost.toLocaleString()} COINS`}{' '}
+                <span style={{ fontSize: '1.8em', lineHeight: 1 }}>☢</span>
+              </motion.button>
+
+              {hasWallet && !canAffordInitiation && (
+                <div className="interaction-hint interaction-hint--warning">
+                  You need {shortfall.toLocaleString()} more coins before the lab can synthesize your aura.
+                </div>
+              )}
+
+              {hasWallet && canAffordInitiation && !isInitiatingCharge && (
+                <div className="interaction-hint">
+                  Your wallet will be charged the moment the generator boots up.
+                </div>
+              )}
+
+              {!hasWallet && !isInitiatingCharge && (
+                <div className="interaction-hint">
+                  Aura generation costs {initiateCost.toLocaleString()} coins when launched from the shop.
+                </div>
+              )}
+            </div>
           </motion.div>
         )}
 

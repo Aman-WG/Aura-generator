@@ -13,6 +13,10 @@ interface ConsoleProps {
   onInitiate: () => void;
   onGenerateAura: (prompt: string) => void;
   onHover?: () => void;
+  coinBalance?: number | null;
+  initiateCost: number;
+  canAffordInitiation: boolean;
+  isInitiatingCharge: boolean;
 }
 
 export function Console({
@@ -23,6 +27,10 @@ export function Console({
   onInitiate,
   onGenerateAura,
   onHover,
+  coinBalance,
+  initiateCost,
+  canAffordInitiation,
+  isInitiatingCharge,
 }: ConsoleProps) {
   const isRow = phase === PHASE.IDLE;
   const [promptError, setPromptError] = useState<string | null>(null);
@@ -48,6 +56,10 @@ export function Console({
           onGenerateAura={onGenerateAura}
           onHover={onHover}
           onPromptError={handlePromptError}
+          coinBalance={coinBalance}
+          initiateCost={initiateCost}
+          canAffordInitiation={canAffordInitiation}
+          isInitiatingCharge={isInitiatingCharge}
         />
       </div>
     </motion.div>

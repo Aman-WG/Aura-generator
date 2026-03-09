@@ -17,6 +17,7 @@ import type { SainathModifiers } from './Stage/AuraModifierPanel';
 const CONSOLE_ENTRANCE_DELAY = 800;
 const TYPEWRITER_START_DELAY = 600;
 const GENERATION_DURATION = 10000;
+const INITIATE_COST = 2000;
 
 export function Layout() {
   const synth = useSynthesizer();
@@ -34,8 +35,14 @@ export function Layout() {
   const [attemptCount, setAttemptCount] = useState(1);
   const [liveConfig, setLiveConfig] = useState<SainathConfig | null>(null);
   const [showExitModal, setShowExitModal] = useState(false);
+  const [isInitiatingCharge, setIsInitiatingCharge] = useState(false);
   const phaseRef = useRef(synth.phase);
   phaseRef.current = synth.phase;
+  const initiateFlowTimeoutRef = useRef<number | null>(null);
+  const coinBalance =
+    typeof bridge.avatarData?.coinBalance === 'number' ? bridge.avatarData.coinBalance : null;
+  const canAffordInitiation = coinBalance == null || coinBalance >= INITIATE_COST;
+  const shortfall = coinBalance == null ? 0 : Math.max(0, INITIATE_COST - coinBalance);
 
   // ── Dismiss handling ──
   const requestDismiss = useCallback(() => {
@@ -79,6 +86,14 @@ export function Layout() {
     return () => window.removeEventListener('keydown', handleKey);
   }, [requestDismiss, showExitModal]);
 
+  useEffect(() => {
+    return () => {
+      if (initiateFlowTimeoutRef.current != null) {
+        window.clearTimeout(initiateFlowTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const handleIntroComplete = useCallback(() => {
     setShowIntro(false);
     const t1 = setTimeout(() => setShowConsole(true), CONSOLE_ENTRANCE_DELAY);
@@ -98,6 +113,12 @@ export function Layout() {
   }, [synth.phase, showConsole]);
 
   const currentLines = useMemo(() => {
+    if (synth.phase === PHASE.IDLE && coinBalance != null && !canAffordInitiation) {
+      return [
+        'Aura generator fee detected: 2,000 coins.',
+        `Wallet shortfall: ${shortfall.toLocaleString()} coins. Earn a bit more in the shop to unlock the lab.`,
+      ];
+    }
     if (synth.phase === PHASE.IDLE && attemptCount > 1) {
       return [
         `Re-attempting aura generation: Attempt ${attemptCount}`,
@@ -109,7 +130,7 @@ export function Layout() {
       ];
     }
     return DIALOGUE[synth.phase].map((d) => d.text);
-  }, [synth.phase, attemptCount]);
+  }, [synth.phase, attemptCount, coinBalance, canAffordInitiation, shortfall]);
 
   const tw = useTypewriter(currentLines, startTyping, {
     speed: 25,
@@ -119,16 +140,29 @@ export function Layout() {
   });
 
   const handleInitiate = useCallback(() => {
+    if (!canAffordInitiation || isInitiatingCharge) return;
+    if (coinBalance != null) {
+      bridge.sendSpendCoins(INITIATE_COST, 'aura-initiation');
+      setIsInitiatingCharge(true);
+    }
     sfx.initiate();
-    setScannerVisible(true);
-    setArmsEntered(true);
-    setTimeout(() => {
-      sfx.laserBurst();
-      setArmFireTrigger((n) => n + 1);
-      setScannerFireTrigger((n) => n + 1);
-    }, 1100);
-    synth.setPhase(PHASE.PROMPT);
-  }, [sfx, synth]);
+    const startDelay = coinBalance != null ? 900 : 0;
+    if (initiateFlowTimeoutRef.current != null) {
+      window.clearTimeout(initiateFlowTimeoutRef.current);
+    }
+    initiateFlowTimeoutRef.current = window.setTimeout(() => {
+      setScannerVisible(true);
+      setArmsEntered(true);
+      setTimeout(() => {
+        sfx.laserBurst();
+        setArmFireTrigger((n) => n + 1);
+        setScannerFireTrigger((n) => n + 1);
+      }, 1100);
+      setIsInitiatingCharge(false);
+      synth.setPhase(PHASE.PROMPT);
+      initiateFlowTimeoutRef.current = null;
+    }, startDelay);
+  }, [bridge, canAffordInitiation, coinBalance, isInitiatingCharge, sfx, synth]);
 
   const aiAbortRef = useRef<AbortController | null>(null);
 
@@ -198,6 +232,7 @@ export function Layout() {
     bridge.sendRetry();
     setAttemptCount((n) => n + 1);
     setLiveConfig(null);
+    setIsInitiatingCharge(false);
     synth.reset();
     setScannerVisible(false);
     setArmsEntered(false);
@@ -213,6 +248,13 @@ export function Layout() {
         <AnimatePresence>
           {showIntro && <IntroSplash onComplete={handleIntroComplete} onSound={sfx.introWhoosh} />}
         </AnimatePresence>
+
+        {coinBalance != null && (
+          <div className="wallet-hud">
+            <span className="wallet-hud__label">STUDENT WALLET</span>
+            <span className="wallet-hud__value">◉ {coinBalance.toLocaleString()} coins</span>
+          </div>
+        )}
 
         <div className="game-window__stage">
           <Stage
@@ -246,6 +288,10 @@ export function Layout() {
               onInitiate={handleInitiate}
               onGenerateAura={handleGenerateAura}
               onHover={sfx.hover}
+              coinBalance={coinBalance}
+              initiateCost={INITIATE_COST}
+              canAffordInitiation={canAffordInitiation}
+              isInitiatingCharge={isInitiatingCharge}
             />
           </div>
         )}

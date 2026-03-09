@@ -1,0 +1,93 @@
+.aura-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: aura-modal-fadein 0.3s ease;
+}
+
+@keyframes aura-modal-fadein {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.aura-modal-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.aura-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 10000;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 1.25rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.aura-modal-close:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.1);
+}
+
+.aura-modal-close-wrap {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.aura-modal-close-wrap .aura-modal-close {
+  position: static;
+}
+
+.aura-modal-close--disabled {
+  opacity: 0.15;
+  cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.aura-modal-close--disabled:hover {
+  background: rgba(255, 255, 255, 0.04);
+  transform: none;
+}
+
+.aura-modal-close-tooltip {
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: #fde447;
+  white-space: nowrap;
+  line-height: 1.5;
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.aura-modal-close-wrap:hover .aura-modal-close-tooltip {
+  opacity: 1;
+}

@@ -11,6 +11,8 @@ export interface AuraConfig {
 export interface AvatarPayload {
   avatarImageUrl: string;
   avatarId?: string;
+  avatarConfig?: unknown;
+  coinBalance?: number;
 }
 
 export type AuraMessage =
@@ -18,8 +20,10 @@ export type AuraMessage =
   | { type: 'aura:equipped'; payload: { auraConfig: AuraConfig; auraParams?: unknown } }
   | { type: 'aura:phase-change'; payload: { phase: string } }
   | { type: 'aura:retry' }
-  | { type: 'aura:close' };
+  | { type: 'aura:close' }
+  | { type: 'aura:spend-coins'; payload: { amount: number; reason?: string } };
 
 export type ParentMessage =
   | { type: 'qbit:avatar-data'; payload: AvatarPayload }
-  | { type: 'qbit:request-close' };
+  | { type: 'qbit:request-close' }
+  | { type: 'qbit:coin-balance'; payload: { coinBalance: number } };

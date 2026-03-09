@@ -33,6 +33,12 @@ export function useParentBridge() {
       if (data.type === 'qbit:avatar-data') {
         setAvatarData(data.payload);
       }
+      if (data.type === 'qbit:coin-balance') {
+        setAvatarData((prev) => {
+          if (!prev) return prev;
+          return { ...prev, coinBalance: data.payload.coinBalance };
+        });
+      }
       if (data.type === 'qbit:request-close') {
         setCloseRequested(true);
       }
@@ -63,6 +69,11 @@ export function useParentBridge() {
 
   const sendRetry = useCallback(() => send({ type: 'aura:retry' }), [send]);
   const sendClose = useCallback(() => send({ type: 'aura:close' }), [send]);
+  const sendSpendCoins = useCallback(
+    (amount: number, reason = 'aura-initiation') =>
+      send({ type: 'aura:spend-coins', payload: { amount, reason } }),
+    [send],
+  );
 
   return {
     isEmbedded,
@@ -73,5 +84,6 @@ export function useParentBridge() {
     sendPhaseChange,
     sendRetry,
     sendClose,
+    sendSpendCoins,
   };
 }

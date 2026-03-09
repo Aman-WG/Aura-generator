@@ -9,153 +9,52 @@ The Aura Lab runs inside an iframe; the two apps communicate via `postMessage`.
 
 ### Parent (Shop) → Iframe (Aura Lab)
 
-| Message type         | Payload                                        | When to send                    |
-| -------------------- | ---------------------------------------------- | ------------------------------- |
-| `qbit:avatar-data`   | `{ avatarImageUrl: string, avatarConfig?: {} }` | Right after the iframe is ready |
+| Message type         | Payload                                                          | When to send                    |
+| -------------------- | ---------------------------------------------------------------- | ------------------------------- |
+| `qbit:avatar-data`   | `{ avatarImageUrl: string, avatarConfig?: {}, coinBalance?: number }` | Right after the iframe is ready |
+| `qbit:request-close` | —                                                                | When the host close button is pressed |
+| `qbit:coin-balance`  | `{ coinBalance: number }`                                        | After the host spends coins for aura initiation |
 
 ### Iframe (Aura Lab) → Parent (Shop)
 
-| Message type          | Payload                                                 | Meaning                                |
-| --------------------- | ------------------------------------------------------- | -------------------------------------- |
-| `aura:ready`          | —                                                       | Iframe loaded, send avatar data now    |
-| `aura:phase-change`   | `{ phase: string }`                                     | User progressed to a new phase         |
-| `aura:equipped`       | `{ auraConfig: { element, energy, chaosPrompt }, auraParams?: AuraParams }` | User clicked "Equip Aura"              |
-| `aura:retry`          | —                                                       | User clicked "Retry"                   |
-| `aura:close`          | —                                                       | User wants to exit the lab             |
+| Message type         | Payload                                                                    | Meaning                                |
+| -------------------- | -------------------------------------------------------------------------- | -------------------------------------- |
+| `aura:ready`         | —                                                                          | Iframe loaded, send avatar data now    |
+| `aura:phase-change`  | `{ phase: string }`                                                        | User progressed to a new phase         |
+| `aura:equipped`      | `{ auraConfig: { element, energy, chaosPrompt }, auraParams?: AuraParams }` | User clicked "Equip Aura"              |
+| `aura:retry`         | —                                                                          | User clicked "Retry"                   |
+| `aura:close`         | —                                                                          | User wants to exit the lab             |
+| `aura:spend-coins`   | `{ amount: number, reason?: string }`                                      | Iframe requests host-side wallet debit |
 
 ---
 
-## Drop-in component for the Q-bit Shop
+## Drop-in Component For The Q-bit Shop
 
-Copy `src/components/AuraLabModal.jsx` (below) into the Q-bit Shop project
-and render it from `App.jsx`.
+This repo now includes the host-side handoff files your dev needs:
 
-### 1. Create `src/components/AuraLabModal.jsx`
+```text
+integration/qbit-shop/AuraLabModal.jsx
+integration/qbit-shop/aura-modal.css
+```
+
+Copy those into the shop project and render the modal from the host app.
+
+### 1. Copy the provided files
+
+```text
+integration/qbit-shop/AuraLabModal.jsx  →  <shop>/src/components/AuraLabModal.jsx
+integration/qbit-shop/aura-modal.css    →  <shop>/src/styles/aura-modal.css
+```
+
+Then import the CSS in your shop entrypoint or top-level app:
 
 ```jsx
-import { useRef, useEffect, useCallback, useState } from 'react';
-import html2canvas from 'html2canvas';
-
-// Point this at wherever the Aura Lab is deployed
-const AURA_LAB_URL = 'https://your-aura-lab.vercel.app';
-
-export function AuraLabModal({ open, onClose, onEquip, avatarRef, avatarConfig }) {
-  const iframeRef = useRef(null);
-  const [iframeReady, setIframeReady] = useState(false);
-
-  // Listen for messages from the Aura Lab iframe
-  useEffect(() => {
-    if (!open) return;
-
-    const handleMessage = (event) => {
-      const { data } = event;
-      if (!data?.type?.startsWith('aura:')) return;
-
-      switch (data.type) {
-        case 'aura:ready':
-          setIframeReady(true);
-          break;
-
-        case 'aura:equipped':
-          console.log('Aura equipped!', data.payload.auraConfig);
-          // Store BOTH auraConfig and auraParams — auraParams powers the canvas aura
-          onEquip(data.payload.auraConfig, data.payload.auraParams ?? null);
-          onClose();
-          break;
-
-        case 'aura:retry':
-          console.log('User retrying aura generation');
-          break;
-
-        case 'aura:close':
-          onClose();
-          break;
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => {
-      window.removeEventListener('message', handleMessage);
-      setIframeReady(false);
-    };
-  }, [open, onClose]);
-
-  // Once the iframe signals ready, capture the avatar and send it over
-  useEffect(() => {
-    if (!iframeReady || !avatarRef?.current || !iframeRef.current) return;
-
-    html2canvas(avatarRef.current, {
-      backgroundColor: null,
-      scale: 2,
-      useCORS: true,
-    }).then((canvas) => {
-      const avatarImageUrl = canvas.toDataURL('image/png');
-
-      iframeRef.current.contentWindow.postMessage(
-        {
-          type: 'qbit:avatar-data',
-          payload: { avatarImageUrl, avatarConfig },
-        },
-        AURA_LAB_URL,
-      );
-    });
-  }, [iframeReady, avatarRef, avatarConfig]);
-
-  if (!open) return null;
-
-  return (
-    <div style={overlayStyle}>
-      <button style={closeBtnStyle} onClick={onClose}>✕</button>
-      <iframe
-        ref={iframeRef}
-        src={AURA_LAB_URL}
-        title="Aura Lab"
-        style={iframeStyle}
-        allow="autoplay"
-      />
-    </div>
-  );
-}
-
-const overlayStyle = {
-  position: 'fixed',
-  inset: 0,
-  zIndex: 9999,
-  background: 'rgba(0, 0, 0, 0.85)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-};
-
-const iframeStyle = {
-  width: '100%',
-  height: '100%',
-  border: 'none',
-  borderRadius: '12px',
-};
-
-const closeBtnStyle = {
-  position: 'absolute',
-  top: 16,
-  right: 16,
-  zIndex: 10000,
-  background: 'rgba(255,255,255,0.1)',
-  border: '1px solid rgba(255,255,255,0.3)',
-  color: '#fff',
-  fontSize: '1.25rem',
-  width: 40,
-  height: 40,
-  borderRadius: '50%',
-  cursor: 'pointer',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-};
+import './styles/aura-modal.css';
 ```
 
 ### 2. Wire it into `App.jsx`
 
-In the Q-bit Shop's `App.jsx`, add the modal and an "Enter Aura Lab" button:
+In the Q-bit Shop's `App.jsx`, pass the avatar ref, selections, wallet balance, and spend handler:
 
 ```jsx
 import { useRef, useState } from 'react';
@@ -167,6 +66,19 @@ function App() {
   const avatarRef = useRef(null);          // ref to the avatar preview DOM node
   const [showAuraLab, setShowAuraLab] = useState(false);
   const [equippedAura, setEquippedAura] = useState(null);
+  const [coinBalance, setCoinBalance] = useState(5000);
+
+  const spendCoins = (amount) => {
+    let nextBalance = coinBalance;
+    let ok = false;
+    setCoinBalance((prev) => {
+      if (prev < amount) return prev;
+      ok = true;
+      nextBalance = prev - amount;
+      return nextBalance;
+    });
+    return { ok, balance: nextBalance };
+  };
 
   // ... existing useAvatarState() hook, etc. ...
 
@@ -190,12 +102,14 @@ function App() {
       <AuraLabModal
         open={showAuraLab}
         onClose={() => setShowAuraLab(false)}
-        onEquip={(config, params) => {
+        onAuraEquipped={(config, params) => {
           setEquippedAura(params);
           // persist config + params to your backend if needed
         }}
-        avatarRef={avatarRef}
+        avatarCanvasRef={avatarRef}
         avatarConfig={selections}
+        coinBalance={coinBalance}
+        onSpendCoins={spendCoins}
       />
     </>
   );
@@ -215,11 +129,15 @@ For local development, use `http://localhost:5173` (or whichever port Vite uses)
 Student opens Q-bit Shop
   └─ Customizes their avatar (hair, headgear, skin, etc.)
   └─ Clicks "⚡ Enter Aura Lab"
-       └─ Full-screen iframe overlay opens
+       └─ Full-screen iframe overlay opens with host-side close button
        └─ Aura Lab loads, sends `aura:ready`
        └─ Shop captures avatar via html2canvas, sends `qbit:avatar-data`
-       └─ Student goes through: Element → Energy → Chaos Prompt → Processing
-       └─ REVEAL screen shows their customized Q-bit with the generated aura
+       └─ Student can press host close button
+            └─ Host sends `qbit:request-close`
+            └─ Aura Lab either blocks close during PROCESSING, or shows the exit modal during REVEAL
+       └─ Student starts generation
+            └─ Aura Lab requests `aura:spend-coins`
+            └─ Shop debits wallet and returns `qbit:coin-balance`
        └─ Student clicks "Equip Aura"
             └─ Aura Lab sends `aura:equipped` with the aura config
             └─ Shop receives it, closes the iframe, stores the result
@@ -293,9 +211,16 @@ the stored object back into `<AuraPreviewWidget auraParams={stored} />`.
 
 ---
 
+## Dismissal Handoff Notes
+
+- The host close button lives in `integration/qbit-shop/AuraLabModal.jsx`
+- The exit confirmation modal lives inside the Aura Lab repo in `src/components/ConfirmExitModal.tsx`
+- The internal close orchestration lives in `src/components/Layout.tsx`
+- The bridge listener for `qbit:request-close` lives in `src/hooks/useParentBridge.ts`
+
 ## Development tips
 
-- Run both projects simultaneously on different ports (`5173` and `5174`)
-- For local testing, set `AURA_LAB_URL = 'http://localhost:5174'`
+- Run both projects simultaneously on different ports (`5173` for Aura Lab and a different port for the shop)
+- For local testing, set `AURA_LAB_URL = 'http://localhost:5173'`
 - The iframe needs `allow="autoplay"` for the background video and sounds to work
 - The `html2canvas` library is already a dependency of the Q-bit Shop project
