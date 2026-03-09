@@ -1,3 +1,29 @@
+# Shop And Aura Generator
+
+This branch is wired as a shop-first merged workspace.
+
+## Local dev
+
+1. Run `npm install` at the repo root
+2. Run `npm run dev`
+3. Open `http://localhost:5173`
+
+Ports on this branch:
+
+- `5173`: Q-bit shop experience
+- `5175`: Aura Lab iframe experience
+
+The shop launches first and embeds the Aura Lab through the host-side dismissal flow.
+
+## Key files
+
+- `shop-app/src/components/AuraLabModal.jsx`
+- `shop-app/src/App.jsx`
+- `shop-app/src/hooks/useAvatarState.js`
+- `src/components/ConfirmExitModal.tsx`
+- `src/components/Layout.tsx`
+- `src/hooks/useParentBridge.ts`
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.

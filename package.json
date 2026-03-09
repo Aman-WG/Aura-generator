@@ -4,9 +4,13 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently -k \"npm run dev:shop\" \"npm run dev:aura\"",
+    "dev:shop": "npm run dev --prefix shop-app",
+    "dev:aura": "vite",
     "build": "tsc -b && vite build",
+    "build:shop": "npm run build --prefix shop-app",
     "lint": "eslint .",
+    "postinstall": "npm install --prefix shop-app",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -26,6 +30,7 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
+    "concurrently": "^9.2.1",
     "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",

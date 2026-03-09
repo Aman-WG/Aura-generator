@@ -119,7 +119,7 @@ function App() {
 ### 3. Update the Aura Lab URL
 
 In `AuraLabModal.jsx`, change `AURA_LAB_URL` to your actual deployment URL.
-For local development, use `http://localhost:5173` (or whichever port Vite uses).
+In this merged shop-first branch, local development uses `http://localhost:5175` for the Aura Lab because the shop occupies `5173`.
 
 ---
 
@@ -220,7 +220,7 @@ the stored object back into `<AuraPreviewWidget auraParams={stored} />`.
 
 ## Development tips
 
-- Run both projects simultaneously on different ports (`5173` for Aura Lab and a different port for the shop)
-- For local testing, set `AURA_LAB_URL = 'http://localhost:5173'`
+- In this merged branch, the shop runs on `5173` and the Aura Lab runs on `5175`
+- For local testing here, set `AURA_LAB_URL = 'http://localhost:5175'`
 - The iframe needs `allow="autoplay"` for the background video and sounds to work
 - The `html2canvas` library is already a dependency of the Q-bit Shop project
