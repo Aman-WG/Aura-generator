@@ -18,6 +18,8 @@ export const DIALOGUE: Record<Phase, DialogueLine[]> = {
   [PHASE.PROCESSING]: [
     { text: 'Cooking your aura...', delay: 0 },
   ],
+
+  [PHASE.REVEAL]: [],
 };
 
 export const PROCESSING_LINES = [
@@ -47,6 +49,3 @@ export const PROCESSING_LINES = [
   'Your aura is almost sentient...',
   'Final seasoning... almost there...',
 ];
-
-  [PHASE.REVEAL]: [],
-};
