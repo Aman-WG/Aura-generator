@@ -37,7 +37,6 @@ const sparkles = Array.from({ length: SPARKLE_COUNT }, (_, i) => {
 });
 
 export function RevealUnlock({ onEquip, onHover, onModifyParams, avatarImageUrl, auraConfig, auraError }: RevealUnlockProps) {
-  const isFallback = auraError?.source === 'fallback';
   const [settled, setSettled] = useState(false);
   const [mods, setMods] = useState<SainathModifiers | null>(null);
 

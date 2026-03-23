@@ -4,8 +4,6 @@ import { Stage } from './Stage';
 import { Console } from './Console';
 import { IntroSplash } from './IntroSplash';
 import { ConfirmExitModal } from './ConfirmExitModal';
-import { BackWarningModal } from './BackWarningModal';
-import { GenerateAnotherModal } from './GenerateAnotherModal';
 import { SpendConfirmModal } from './SpendConfirmModal';
 import { useTypewriter } from '../hooks/useTypewriter';
 import { useSound } from '../hooks/useSound';
@@ -15,7 +13,6 @@ import { PHASE } from '../constants/phases';
 import { DIALOGUE } from '../constants/dialogue';
 import { generateSainathAura, FALLBACK_CONFIG } from '../sainath-engine/sainath-ai';
 import type { SainathConfig } from '../sainath-engine/types';
-import type { SainathModifiers } from './Stage/AuraModifierPanel';
 
 const CONSOLE_ENTRANCE_DELAY = 300;
 const TYPEWRITER_START_DELAY = 300;
@@ -38,8 +35,6 @@ export function Layout() {
   const [attemptCount, setAttemptCount] = useState(1);
   const [liveConfig, setLiveConfig] = useState<SainathConfig | null>(null);
   const [showExitModal, setShowExitModal] = useState(false);
-  const [showBackModal, setShowBackModal] = useState(false);
-  const [showGenerateAnotherConfirm, setShowGenerateAnotherConfirm] = useState(false);
   const [showSpendConfirm, setShowSpendConfirm] = useState(false);
   const [pendingPrompt, setPendingPrompt] = useState('');
   const phaseRef = useRef(synth.phase);
@@ -89,40 +84,6 @@ export function Layout() {
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
   }, [requestDismiss, showExitModal]);
-
-  // ── Browser back interception during PROCESSING/REVEAL ──
-  // TODO: re-enable after fixing Generate Another flow
-  /*
-  useEffect(() => {
-    const phase = synth.phase;
-    if (phase !== PHASE.PROCESSING && phase !== PHASE.REVEAL) return;
-
-    window.history.pushState({ auraLab: true }, '');
-
-    const handlePopState = () => {
-      const current = phaseRef.current;
-      if (current === PHASE.PROCESSING) {
-        window.history.pushState({ auraLab: true }, '');
-        setShowBackModal(true);
-      } else if (current === PHASE.REVEAL) {
-        window.history.pushState({ auraLab: true }, '');
-        setShowExitModal(true);
-      }
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, [synth.phase]);
-  */
-
-  const handleBackModalStay = useCallback(() => {
-    setShowBackModal(false);
-  }, []);
-
-  const handleBackModalLeave = useCallback(() => {
-    setShowBackModal(false);
-    bridge.sendClose();
-  }, [bridge]);
 
   const handleIntroComplete = useCallback(() => {
     setShowIntro(false);
@@ -246,36 +207,10 @@ export function Layout() {
     });
   }, [sfx, synth, bridge, coinBalance, pendingPrompt]);
 
-  const handleModifyParams = useCallback((_mods: SainathModifiers) => {
-    // Modifiers are applied directly in RevealUnlock via SainathAuraCanvas props
-  }, []);
-
   const handleEquipAura = useCallback(() => {
     sfx.equip();
     bridge.sendEquipped({ element: null, energy: null, chaosPrompt: synth.prompt }, undefined);
   }, [sfx, bridge, synth.prompt]);
-
-  const handleRequestGenerateAnother = useCallback(() => {
-    setShowGenerateAnotherConfirm(true);
-  }, []);
-
-  const handleConfirmGenerateAnother = useCallback(() => {
-    setShowGenerateAnotherConfirm(false);
-    // Save current aura to shop without closing
-    sfx.equip();
-    bridge.sendSave({ element: null, energy: null, chaosPrompt: synth.prompt }, liveConfig);
-    // Reset for next generation
-    sfx.select();
-    setAttemptCount((n) => n + 1);
-    setLiveConfig(null);
-    synth.reset();
-    setScannerVisible(false);
-    setArmsEntered(false);
-    setIsGenerating(false);
-    // Force typing to restart when console remounts
-    setStartTyping(false);
-    setTimeout(() => setStartTyping(true), 350);
-  }, [sfx, synth, bridge, liveConfig]);
 
   const hideConsole = synth.phase === PHASE.REVEAL;
 
@@ -304,7 +239,6 @@ export function Layout() {
             isGenerating={isGenerating}
             onEquipAura={handleEquipAura}
             onHover={sfx.hover}
-            onModifyParams={handleModifyParams}
             avatarImageUrl={bridge.avatarData?.avatarImageUrl}
             auraConfig={liveConfig}
             auraError={synth.auraError}
@@ -333,25 +267,6 @@ export function Layout() {
           <ConfirmExitModal
             onSaveAndExit={handleSaveAndExit}
             onKeepTweaking={handleKeepTweaking}
-          />
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showBackModal && (
-          <BackWarningModal
-            onStay={handleBackModalStay}
-            onLeave={handleBackModalLeave}
-          />
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showGenerateAnotherConfirm && (
-          <GenerateAnotherModal
-            cost={GENERATE_COST}
-            onConfirm={handleConfirmGenerateAnother}
-            onCancel={() => setShowGenerateAnotherConfirm(false)}
           />
         )}
       </AnimatePresence>
