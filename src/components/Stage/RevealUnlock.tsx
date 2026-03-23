@@ -217,7 +217,7 @@ export function RevealUnlock({ onEquip, onHover, onModifyParams, avatarImageUrl,
 
       {/* ─── Left panel — only mounts after settled ─── */}
       <AnimatePresence>
-        {settled && auraConfig && onModifyParams && (
+        {settled && auraConfig && (
           <motion.div
             className="reveal-unlock__panel-dock"
             initial={{ opacity: 0 }}

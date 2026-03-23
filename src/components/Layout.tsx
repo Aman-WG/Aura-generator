@@ -10,11 +10,11 @@ import { useSound } from '../hooks/useSound';
 import { useSynthesizer } from '../hooks/useSynthesizer';
 import { useBridge } from '../context/ParentBridgeContext';
 import { PHASE } from '../constants/phases';
-import { DIALOGUE } from '../constants/dialogue';
+import { DIALOGUE, PROCESSING_LINES } from '../constants/dialogue';
 import { generateSainathAura, FALLBACK_CONFIG } from '../sainath-engine/sainath-ai';
 import type { SainathConfig } from '../sainath-engine/types';
 
-const CONSOLE_ENTRANCE_DELAY = 300;
+const CONSOLE_ENTRANCE_DELAY = 0;
 const TYPEWRITER_START_DELAY = 300;
 const GENERATION_DURATION = 10000;
 const GENERATE_COST = 10000;
@@ -103,6 +103,25 @@ export function Layout() {
     return () => clearTimeout(t);
   }, [synth.phase, showConsole]);
 
+  const [processingLine, setProcessingLine] = useState(() =>
+    PROCESSING_LINES[Math.floor(Math.random() * PROCESSING_LINES.length)]
+  );
+
+  useEffect(() => {
+    if (synth.phase !== PHASE.PROCESSING) return;
+    setProcessingLine(PROCESSING_LINES[Math.floor(Math.random() * PROCESSING_LINES.length)]);
+    const interval = setInterval(() => {
+      setProcessingLine((prev) => {
+        let next = prev;
+        while (next === prev) {
+          next = PROCESSING_LINES[Math.floor(Math.random() * PROCESSING_LINES.length)];
+        }
+        return next;
+      });
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [synth.phase]);
+
   const currentLines = useMemo(() => {
     if (synth.phase === PHASE.IDLE && attemptCount > 1) {
       return [
@@ -114,8 +133,11 @@ export function Layout() {
             : "You're building a whole collection. Go off.",
       ];
     }
+    if (synth.phase === PHASE.PROCESSING) {
+      return [processingLine];
+    }
     return DIALOGUE[synth.phase].map((d) => d.text);
-  }, [synth.phase, attemptCount]);
+  }, [synth.phase, attemptCount, processingLine]);
 
   const tw = useTypewriter(currentLines, startTyping, {
     speed: 25,
