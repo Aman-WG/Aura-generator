@@ -522,6 +522,7 @@
 .dialogue-box {
   flex-shrink: 0;
   overflow: hidden;
+  min-height: 24px;
 }
 
 .dialogue-box__scroll {

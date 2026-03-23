@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import type { Phase } from '../../types';
+import { PHASE } from '../../constants/phases';
 import { DialogueBox } from './DialogueBox';
 import { InteractionArea } from './InteractionArea';
 
@@ -26,10 +27,13 @@ export function Console({
   generateCost,
   canAffordGeneration,
 }: ConsoleProps) {
+  // Disable layout animation during PROCESSING to prevent height jitter from cycling text
+  const enableLayout = phase !== PHASE.PROCESSING;
+
   return (
     <motion.div
       className="console"
-      layout
+      layout={enableLayout}
       initial={{ y: '100%', opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{
@@ -38,7 +42,7 @@ export function Console({
         layout: { duration: 0.45, ease: [0.4, 0, 0.2, 1] },
       }}
     >
-      <motion.div className="console__body" layout transition={{ layout: { duration: 0.45, ease: [0.4, 0, 0.2, 1] } }}>
+      <motion.div className="console__body" layout={enableLayout} transition={{ layout: { duration: 0.45, ease: [0.4, 0, 0.2, 1] } }}>
         <DialogueBox lines={displayedLines} isTyping={isTyping} />
         <InteractionArea
           phase={phase}
