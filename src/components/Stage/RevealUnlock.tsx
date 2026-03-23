@@ -7,7 +7,6 @@ import { AuraModifierPanel, type SainathModifiers } from './AuraModifierPanel';
 
 interface RevealUnlockProps {
   onEquip: () => void;
-  onRetry: () => void;
   onHover?: () => void;
   onModifyParams?: (mods: SainathModifiers) => void;
   avatarImageUrl?: string;
@@ -37,7 +36,7 @@ const sparkles = Array.from({ length: SPARKLE_COUNT }, (_, i) => {
   return { angle, radius, size, delay, id: i };
 });
 
-export function RevealUnlock({ onEquip, onRetry, onHover, onModifyParams, avatarImageUrl, auraConfig, auraError }: RevealUnlockProps) {
+export function RevealUnlock({ onEquip, onHover, onModifyParams, avatarImageUrl, auraConfig, auraError }: RevealUnlockProps) {
   const isFallback = auraError?.source === 'fallback';
   const [settled, setSettled] = useState(false);
   const [mods, setMods] = useState<SainathModifiers | null>(null);
@@ -244,16 +243,9 @@ export function RevealUnlock({ onEquip, onRetry, onHover, onModifyParams, avatar
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2, type: 'spring', stiffness: 150, damping: 18 }}
           >
-            {isFallback && (
-              <div className="reveal-unlock__fallback-notice">
-                {auraError?.error || 'AI unavailable — showing fallback aura'}
-              </div>
-            )}
-            <button className="pixel-btn pixel-btn--ghost" onClick={onRetry} onMouseEnter={onHover}>
-              Retry
-            </button>
+            <span className="reveal-unlock__cta-hint">Done tweaking? Lock it in.</span>
             <button className="pixel-btn" onClick={onEquip} onMouseEnter={onHover}>
-              Equip Aura
+              Save &amp; Exit
             </button>
           </motion.div>
         )}

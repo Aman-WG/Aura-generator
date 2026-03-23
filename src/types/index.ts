@@ -18,6 +18,7 @@ export interface AvatarPayload {
 export type AuraMessage =
   | { type: 'aura:ready' }
   | { type: 'aura:equipped'; payload: { auraConfig: AuraConfig; auraParams?: unknown } }
+  | { type: 'aura:save'; payload: { auraConfig: AuraConfig; auraParams?: unknown } }
   | { type: 'aura:phase-change'; payload: { phase: string } }
   | { type: 'aura:retry' }
   | { type: 'aura:close' }

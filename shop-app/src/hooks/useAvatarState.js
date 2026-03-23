@@ -19,7 +19,7 @@ export function useAvatarState() {
   const [hairColor, setHairColor] = useState('black'); // Default hair color
   const [skinTone, setSkinTone] = useState('default'); // Default skin tone
   const [expression, setExpression] = useState('basic'); // Default expression
-  const [coinBalance, setCoinBalance] = useState(5000);
+  const [coinBalance, setCoinBalance] = useState(100000);
   const [purchasedItems, setPurchasedItems] = useState(new Set());
   const [customAuras, setCustomAuras] = useState([]);
   const [auraParams, setAuraParams] = useState(null);
@@ -113,6 +113,10 @@ export function useAvatarState() {
     return { ok, balance: nextBalance };
   }, []);
 
+  const setWalletBalance = useCallback((amount) => {
+    setCoinBalance(Math.max(0, Math.floor(amount)));
+  }, []);
+
   // Receive a custom aura from the Aura Lab, create a tile, and equip it
   const equipCustomAura = useCallback((auraConfig, params = null) => {
     const item = buildCustomAuraItem(auraConfig, customAuras.length);
@@ -204,6 +208,7 @@ export function useAvatarState() {
     expression,
     changeExpression,
     coinBalance,
+    setWalletBalance,
     spendCoins,
     purchasedItems,
     purchaseItem,

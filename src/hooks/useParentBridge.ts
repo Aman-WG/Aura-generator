@@ -67,6 +67,12 @@ export function useParentBridge() {
     [send],
   );
 
+  const sendSave = useCallback(
+    (auraConfig: AuraConfig, auraParams?: unknown) =>
+      send({ type: 'aura:save', payload: { auraConfig, auraParams } }),
+    [send],
+  );
+
   const sendRetry = useCallback(() => send({ type: 'aura:retry' }), [send]);
   const sendClose = useCallback(() => send({ type: 'aura:close' }), [send]);
   const sendSpendCoins = useCallback(
@@ -81,6 +87,7 @@ export function useParentBridge() {
     closeRequested,
     clearCloseRequest,
     sendEquipped,
+    sendSave,
     sendPhaseChange,
     sendRetry,
     sendClose,

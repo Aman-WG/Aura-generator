@@ -4,6 +4,9 @@ import { Stage } from './Stage';
 import { Console } from './Console';
 import { IntroSplash } from './IntroSplash';
 import { ConfirmExitModal } from './ConfirmExitModal';
+import { BackWarningModal } from './BackWarningModal';
+import { GenerateAnotherModal } from './GenerateAnotherModal';
+import { SpendConfirmModal } from './SpendConfirmModal';
 import { useTypewriter } from '../hooks/useTypewriter';
 import { useSound } from '../hooks/useSound';
 import { useSynthesizer } from '../hooks/useSynthesizer';
@@ -14,10 +17,10 @@ import { generateSainathAura, FALLBACK_CONFIG } from '../sainath-engine/sainath-
 import type { SainathConfig } from '../sainath-engine/types';
 import type { SainathModifiers } from './Stage/AuraModifierPanel';
 
-const CONSOLE_ENTRANCE_DELAY = 800;
-const TYPEWRITER_START_DELAY = 600;
+const CONSOLE_ENTRANCE_DELAY = 300;
+const TYPEWRITER_START_DELAY = 300;
 const GENERATION_DURATION = 10000;
-const INITIATE_COST = 2000;
+const GENERATE_COST = 10000;
 
 export function Layout() {
   const synth = useSynthesizer();
@@ -35,14 +38,15 @@ export function Layout() {
   const [attemptCount, setAttemptCount] = useState(1);
   const [liveConfig, setLiveConfig] = useState<SainathConfig | null>(null);
   const [showExitModal, setShowExitModal] = useState(false);
-  const [isInitiatingCharge, setIsInitiatingCharge] = useState(false);
+  const [showBackModal, setShowBackModal] = useState(false);
+  const [showGenerateAnotherConfirm, setShowGenerateAnotherConfirm] = useState(false);
+  const [showSpendConfirm, setShowSpendConfirm] = useState(false);
+  const [pendingPrompt, setPendingPrompt] = useState('');
   const phaseRef = useRef(synth.phase);
   phaseRef.current = synth.phase;
-  const initiateFlowTimeoutRef = useRef<number | null>(null);
   const coinBalance =
     typeof bridge.avatarData?.coinBalance === 'number' ? bridge.avatarData.coinBalance : null;
-  const canAffordInitiation = coinBalance == null || coinBalance >= INITIATE_COST;
-  const shortfall = coinBalance == null ? 0 : Math.max(0, INITIATE_COST - coinBalance);
+  const canAffordGeneration = coinBalance == null || coinBalance >= GENERATE_COST;
 
   // ── Dismiss handling ──
   const requestDismiss = useCallback(() => {
@@ -86,13 +90,39 @@ export function Layout() {
     return () => window.removeEventListener('keydown', handleKey);
   }, [requestDismiss, showExitModal]);
 
+  // ── Browser back interception during PROCESSING/REVEAL ──
+  // TODO: re-enable after fixing Generate Another flow
+  /*
   useEffect(() => {
-    return () => {
-      if (initiateFlowTimeoutRef.current != null) {
-        window.clearTimeout(initiateFlowTimeoutRef.current);
+    const phase = synth.phase;
+    if (phase !== PHASE.PROCESSING && phase !== PHASE.REVEAL) return;
+
+    window.history.pushState({ auraLab: true }, '');
+
+    const handlePopState = () => {
+      const current = phaseRef.current;
+      if (current === PHASE.PROCESSING) {
+        window.history.pushState({ auraLab: true }, '');
+        setShowBackModal(true);
+      } else if (current === PHASE.REVEAL) {
+        window.history.pushState({ auraLab: true }, '');
+        setShowExitModal(true);
       }
     };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [synth.phase]);
+  */
+
+  const handleBackModalStay = useCallback(() => {
+    setShowBackModal(false);
   }, []);
+
+  const handleBackModalLeave = useCallback(() => {
+    setShowBackModal(false);
+    bridge.sendClose();
+  }, [bridge]);
 
   const handleIntroComplete = useCallback(() => {
     setShowIntro(false);
@@ -113,24 +143,18 @@ export function Layout() {
   }, [synth.phase, showConsole]);
 
   const currentLines = useMemo(() => {
-    if (synth.phase === PHASE.IDLE && coinBalance != null && !canAffordInitiation) {
-      return [
-        'Aura generator fee detected: 2,000 coins.',
-        `Wallet shortfall: ${shortfall.toLocaleString()} coins. Earn a bit more in the shop to unlock the lab.`,
-      ];
-    }
     if (synth.phase === PHASE.IDLE && attemptCount > 1) {
       return [
-        `Re-attempting aura generation: Attempt ${attemptCount}`,
+        `Aura #${attemptCount} incoming. Synthesizer primed.`,
         attemptCount === 2
-          ? "Previous calibration didn't stick. Let's run it back."
+          ? "Last one's locked in. Let's cook something new."
           : attemptCount === 3
-            ? 'Persistence detected. The synthesizer remembers you.'
-            : "You're practically a lab regular now. Fire when ready.",
+            ? "Three auras deep. The lab's warming up to you."
+            : "You're building a whole collection. Go off.",
       ];
     }
     return DIALOGUE[synth.phase].map((d) => d.text);
-  }, [synth.phase, attemptCount, coinBalance, canAffordInitiation, shortfall]);
+  }, [synth.phase, attemptCount]);
 
   const tw = useTypewriter(currentLines, startTyping, {
     speed: 25,
@@ -139,18 +163,10 @@ export function Layout() {
     onLineComplete: () => sfx.keystroke(),
   });
 
-  const handleInitiate = useCallback(() => {
-    if (!canAffordInitiation || isInitiatingCharge) return;
-    if (coinBalance != null) {
-      bridge.sendSpendCoins(INITIATE_COST, 'aura-initiation');
-      setIsInitiatingCharge(true);
-    }
-    sfx.initiate();
-    const startDelay = coinBalance != null ? 900 : 0;
-    if (initiateFlowTimeoutRef.current != null) {
-      window.clearTimeout(initiateFlowTimeoutRef.current);
-    }
-    initiateFlowTimeoutRef.current = window.setTimeout(() => {
+  // Auto-transition from IDLE → PROMPT once greeting dialogue finishes typing
+  useEffect(() => {
+    if (synth.phase !== PHASE.IDLE || !tw.isComplete) return;
+    const t = setTimeout(() => {
       setScannerVisible(true);
       setArmsEntered(true);
       setTimeout(() => {
@@ -158,15 +174,27 @@ export function Layout() {
         setArmFireTrigger((n) => n + 1);
         setScannerFireTrigger((n) => n + 1);
       }, 1100);
-      setIsInitiatingCharge(false);
       synth.setPhase(PHASE.PROMPT);
-      initiateFlowTimeoutRef.current = null;
-    }, startDelay);
-  }, [bridge, canAffordInitiation, coinBalance, isInitiatingCharge, sfx, synth]);
+    }, 600);
+    return () => clearTimeout(t);
+  }, [synth.phase, tw.isComplete, sfx, synth]);
 
   const aiAbortRef = useRef<AbortController | null>(null);
 
-  const handleGenerateAura = useCallback((prompt: string) => {
+  const handleRequestGenerate = useCallback((prompt: string) => {
+    if (!canAffordGeneration) return;
+    setPendingPrompt(prompt);
+    setShowSpendConfirm(true);
+  }, [canAffordGeneration]);
+
+  const handleConfirmGenerate = useCallback(() => {
+    setShowSpendConfirm(false);
+    const prompt = pendingPrompt;
+
+    // Charge coins on generate
+    if (coinBalance != null) {
+      bridge.sendSpendCoins(GENERATE_COST, 'aura-generation');
+    }
     sfx.glitch();
     sfx.startMachine();
     sfx.startLaser();
@@ -216,7 +244,7 @@ export function Layout() {
       setScannerVisible(false);
       setArmsEntered(false);
     });
-  }, [sfx, synth]);
+  }, [sfx, synth, bridge, coinBalance, pendingPrompt]);
 
   const handleModifyParams = useCallback((_mods: SainathModifiers) => {
     // Modifiers are applied directly in RevealUnlock via SainathAuraCanvas props
@@ -227,19 +255,28 @@ export function Layout() {
     bridge.sendEquipped({ element: null, energy: null, chaosPrompt: synth.prompt }, undefined);
   }, [sfx, bridge, synth.prompt]);
 
-  const handleRetry = useCallback(() => {
+  const handleRequestGenerateAnother = useCallback(() => {
+    setShowGenerateAnotherConfirm(true);
+  }, []);
+
+  const handleConfirmGenerateAnother = useCallback(() => {
+    setShowGenerateAnotherConfirm(false);
+    // Save current aura to shop without closing
+    sfx.equip();
+    bridge.sendSave({ element: null, energy: null, chaosPrompt: synth.prompt }, liveConfig);
+    // Reset for next generation
     sfx.select();
-    bridge.sendRetry();
     setAttemptCount((n) => n + 1);
     setLiveConfig(null);
-    setIsInitiatingCharge(false);
     synth.reset();
     setScannerVisible(false);
     setArmsEntered(false);
     setIsGenerating(false);
-  }, [sfx, synth, bridge]);
+    // Force typing to restart when console remounts
+    setStartTyping(false);
+    setTimeout(() => setStartTyping(true), 350);
+  }, [sfx, synth, bridge, liveConfig]);
 
-  const consoleHeight = synth.phase === PHASE.PROMPT ? '24%' : '20%';
   const hideConsole = synth.phase === PHASE.REVEAL;
 
   return (
@@ -266,7 +303,6 @@ export function Layout() {
             armFireTrigger={armFireTrigger}
             isGenerating={isGenerating}
             onEquipAura={handleEquipAura}
-            onRetry={handleRetry}
             onHover={sfx.hover}
             onModifyParams={handleModifyParams}
             avatarImageUrl={bridge.avatarData?.avatarImageUrl}
@@ -276,22 +312,17 @@ export function Layout() {
         </div>
 
         {showConsole && !hideConsole && (
-          <div
-            className="game-window__console"
-            style={{ height: consoleHeight, transition: 'height 0.4s ease' }}
-          >
+          <div className="game-window__console">
             <Console
               phase={synth.phase}
               displayedLines={tw.displayedLines}
               isTyping={tw.isTyping}
               isTypingComplete={tw.isComplete}
-              onInitiate={handleInitiate}
-              onGenerateAura={handleGenerateAura}
+              onGenerateAura={handleRequestGenerate}
               onHover={sfx.hover}
               coinBalance={coinBalance}
-              initiateCost={INITIATE_COST}
-              canAffordInitiation={canAffordInitiation}
-              isInitiatingCharge={isInitiatingCharge}
+              generateCost={GENERATE_COST}
+              canAffordGeneration={canAffordGeneration}
             />
           </div>
         )}
@@ -302,6 +333,35 @@ export function Layout() {
           <ConfirmExitModal
             onSaveAndExit={handleSaveAndExit}
             onKeepTweaking={handleKeepTweaking}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showBackModal && (
+          <BackWarningModal
+            onStay={handleBackModalStay}
+            onLeave={handleBackModalLeave}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showGenerateAnotherConfirm && (
+          <GenerateAnotherModal
+            cost={GENERATE_COST}
+            onConfirm={handleConfirmGenerateAnother}
+            onCancel={() => setShowGenerateAnotherConfirm(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showSpendConfirm && (
+          <SpendConfirmModal
+            cost={GENERATE_COST}
+            onConfirm={handleConfirmGenerate}
+            onCancel={() => setShowSpendConfirm(false)}
           />
         )}
       </AnimatePresence>

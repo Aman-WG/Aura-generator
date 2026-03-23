@@ -8,7 +8,7 @@ export interface DialogueLine {
 export const DIALOGUE: Record<Phase, DialogueLine[]> = {
   [PHASE.IDLE]: [
     { text: 'Q-BIT scan complete. Drip levels: CRITICAL.', delay: 0 },
-    { text: "Let's fix that. Hit the button.", delay: 700 },
+    { text: "Time to cook. Initializing aura synthesizer...", delay: 700 },
   ],
 
   [PHASE.PROMPT]: [

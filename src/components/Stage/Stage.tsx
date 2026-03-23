@@ -18,7 +18,6 @@ interface StageProps {
   armFireTrigger: number;
   isGenerating: boolean;
   onEquipAura: () => void;
-  onRetry: () => void;
   onHover?: () => void;
   onModifyParams?: (mods: SainathModifiers) => void;
   avatarImageUrl?: string;
@@ -32,7 +31,7 @@ const shakeKeyframes = {
   rotate: [0, -0.6, 0.6, -0.4, 0.3, -0.1, 0],
 };
 
-export function Stage({ phase, isShaking, scannerVisible, scannerFireTrigger, armsEntered, armFireTrigger, isGenerating, onEquipAura, onRetry, onHover, onModifyParams, avatarImageUrl, auraConfig, auraError }: StageProps) {
+export function Stage({ phase, isShaking, scannerVisible, scannerFireTrigger, armsEntered, armFireTrigger, isGenerating, onEquipAura, onHover, onModifyParams, avatarImageUrl, auraConfig, auraError }: StageProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -106,7 +105,7 @@ export function Stage({ phase, isShaking, scannerVisible, scannerFireTrigger, ar
       </AnimatePresence>
 
       <AnimatePresence>
-        {phase === PHASE.REVEAL && <RevealUnlock onEquip={onEquipAura} onRetry={onRetry} onHover={onHover} onModifyParams={onModifyParams} avatarImageUrl={avatarImageUrl} auraConfig={auraConfig ?? null} auraError={auraError ?? null} />}
+        {phase === PHASE.REVEAL && <RevealUnlock onEquip={onEquipAura} onHover={onHover} onModifyParams={onModifyParams} avatarImageUrl={avatarImageUrl} auraConfig={auraConfig ?? null} auraError={auraError ?? null} />}
       </AnimatePresence>
     </motion.div>
   );

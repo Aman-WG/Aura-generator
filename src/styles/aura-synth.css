@@ -69,7 +69,6 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 20%;
   z-index: 10;
   padding: 0;
 }
@@ -496,7 +495,7 @@
   -webkit-backdrop-filter: blur(16px) saturate(1.2);
   border: none;
   border-radius: 0;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: none;
   display: flex;
   flex-direction: column;
@@ -507,9 +506,9 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  gap: 6px;
-  padding: 10px 28px 12px;
-  overflow: hidden;
+  gap: 16px;
+  padding: 16px 32px 12px;
+  overflow: visible;
   position: relative;
   z-index: 2;
 }
@@ -737,6 +736,189 @@
 }
 
 
+/* Generate button — Figma-aligned: row layout, matches input height */
+.pixel-btn--generate {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 0 24px;
+  height: 52px;
+  font-size: 14px;
+  letter-spacing: 2px;
+  flex-shrink: 0;
+  align-self: flex-start;
+  border-radius: 4px;
+  background: #FDE447;
+  box-shadow:
+    0 0 20px rgba(253, 228, 71, 0.5),
+    0 0 50px rgba(253, 228, 71, 0.2);
+}
+
+.pixel-btn--generate:hover {
+  background: #fff06a;
+  box-shadow:
+    0 0 28px rgba(253, 228, 71, 0.7),
+    0 0 70px rgba(253, 228, 71, 0.3);
+}
+
+.generate-btn__label {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  color: #000;
+}
+
+.generate-btn__cost-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  background: rgba(9, 9, 9, 0.8);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  line-height: 1;
+}
+
+.generate-btn__coin-icon {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 35%, #fff2a8 0%, #ffd76b 18%, transparent 19%),
+    radial-gradient(circle at 50% 50%, #ffca55 0%, #f2982f 55%, #c96a18 100%);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 232, 120, 0.45),
+    0 0 12px rgba(255, 170, 80, 0.22);
+  flex-shrink: 0;
+}
+
+.generate-btn__coin-icon::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 244, 190, 0.55);
+}
+
+/* Ghost variant cost pill — for secondary CTAs */
+.generate-btn__cost-pill--ghost {
+  background: rgba(255, 228, 48, 0.12);
+  color: #ffe430;
+  box-shadow: inset 0 0 0 1px rgba(255, 228, 48, 0.25);
+}
+
+.prompt-ui__generate-wrap {
+  position: relative;
+  flex-shrink: 0;
+  align-self: flex-start;
+  display: flex;
+}
+
+/* ── Coin Confirm Popover — matches exit-modal style language ── */
+.coin-confirm {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  right: 0;
+  width: 320px;
+  background: rgba(15, 12, 35, 0.97);
+  border: 1px solid rgba(255, 228, 48, 0.2);
+  border-radius: 0;
+  padding: 20px;
+  z-index: 100;
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  box-shadow:
+    -4px 0 0 0 rgba(255, 228, 48, 0.15),
+    4px 0 0 0 rgba(255, 228, 48, 0.15),
+    0 -4px 0 0 rgba(255, 228, 48, 0.15),
+    0 4px 0 0 rgba(255, 228, 48, 0.15),
+    0 0 40px rgba(0, 0, 0, 0.6),
+    0 0 80px rgba(0, 0, 0, 0.3);
+}
+
+.coin-confirm__body {
+  margin-bottom: 16px;
+}
+
+.coin-confirm__text {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.75);
+  margin: 0;
+}
+
+.coin-confirm__text strong {
+  color: #FDE447;
+  font-weight: 700;
+}
+
+.coin-confirm__actions {
+  display: flex;
+  gap: 10px;
+}
+
+.coin-confirm__btn {
+  flex: 1;
+  padding: 10px 14px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.coin-confirm__btn--cancel {
+  background: transparent;
+  color: #ffe430;
+  border: 1px solid rgba(255, 228, 48, 0.5);
+  box-shadow: 0 0 12px rgba(255, 228, 48, 0.08);
+}
+
+.coin-confirm__btn--cancel:hover {
+  background: rgba(255, 228, 48, 0.1);
+  border-color: rgba(255, 228, 48, 0.7);
+  box-shadow: 0 0 18px rgba(255, 228, 48, 0.15);
+}
+
+.coin-confirm__btn--confirm {
+  background: #ffe430;
+  color: #0a0a0f;
+  font-weight: 800;
+  box-shadow:
+    0 0 16px rgba(255, 228, 48, 0.4),
+    0 0 40px rgba(255, 228, 48, 0.15);
+}
+
+.coin-confirm__btn--confirm:hover {
+  background: #fff06a;
+  box-shadow:
+    0 0 24px rgba(255, 228, 48, 0.6),
+    0 0 60px rgba(255, 228, 48, 0.25);
+}
+
+.prompt-ui__wallet-warning {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  color: #ff6b6b;
+  text-shadow: 0 0 8px rgba(255, 68, 68, 0.4);
+  text-align: center;
+  line-height: 1.6;
+  margin-top: 10px;
+}
+
 /* ═══════════════════════════════════════════════════════════════
    11. INTERACTION AREA — layout helpers
    ═══════════════════════════════════════════════════════════════ */
@@ -762,6 +944,66 @@
   align-items: center;
   pointer-events: none;
   z-index: 4;
+}
+
+.idle-cta__launch-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  min-width: 460px;
+  padding: 14px 22px 14px 24px;
+}
+
+.idle-cta__launch-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
+  letter-spacing: 1.2px;
+  line-height: 1;
+}
+
+.idle-cta__launch-icon {
+  font-size: 27px;
+  line-height: 1;
+}
+
+.idle-cta__cost-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  background: rgba(9, 9, 9, 0.8);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.idle-cta__coin-icon {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 35%, #fff2a8 0%, #ffd76b 18%, transparent 19%),
+    radial-gradient(circle at 50% 50%, #ffca55 0%, #f2982f 55%, #c96a18 100%);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 232, 120, 0.45),
+    0 0 12px rgba(255, 170, 80, 0.22);
+  flex-shrink: 0;
+}
+
+.idle-cta__coin-icon::before {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 244, 190, 0.55);
 }
 
 .idle-cta__debit-burst {
@@ -998,7 +1240,18 @@
 
 .reveal-unlock__cta-dock .pixel-btn,
 .reveal-unlock__cta-dock .pixel-btn--ghost {
-  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  white-space: nowrap;
+  padding: 14px 20px;
+}
+
+.reveal-unlock__cta-hint {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.5px;
   white-space: nowrap;
 }
 
@@ -1429,42 +1682,61 @@
 .prompt-ui {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0;
   width: 100%;
 }
 
 .prompt-ui__row {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  align-items: stretch;
+  gap: 16px;
+}
+
+.prompt-ui__left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
 }
 
 .prompt-ui__input-wrap {
-  flex: 1;
+  flex: none;
   position: relative;
 }
 
 .prompt-ui__input {
   width: 100%;
-  padding: 10px 60px 10px 14px;
+  padding: 16px 60px 16px 16px;
   font-family: 'Press Start 2P', monospace;
   font-size: 10px;
-  color: #00ff41;
-  background: rgba(0, 255, 65, 0.06);
-  border: 1px solid rgba(0, 255, 65, 0.3);
-  border-radius: 6px;
+  color: #52ff51;
+  background: rgba(0, 255, 65, 0.04);
+  border: 1px solid #52ff51;
+  border-radius: 8px;
   outline: none;
-  text-shadow: 0 0 6px rgba(0, 255, 65, 0.4);
+  text-shadow: 0 0 6px rgba(82, 255, 81, 0.4);
+  animation: prompt-glow 3s ease-in-out infinite;
+}
+
+@keyframes prompt-glow {
+  0%, 100% {
+    box-shadow: 0 0 4px rgba(82, 255, 81, 0.15), 0 0 12px rgba(82, 255, 81, 0.05);
+  }
+  50% {
+    box-shadow: 0 0 8px rgba(82, 255, 81, 0.35), 0 0 24px rgba(82, 255, 81, 0.12);
+  }
 }
 
 .prompt-ui__input::placeholder {
-  color: rgba(0, 255, 65, 0.3);
+  color: rgba(82, 255, 81, 0.3);
   text-shadow: none;
 }
 
 .prompt-ui__input:focus {
-  border-color: rgba(0, 255, 65, 0.6);
-  box-shadow: 0 0 12px rgba(0, 255, 65, 0.15);
+  border-color: #52ff51;
+  box-shadow: 0 0 12px rgba(82, 255, 81, 0.15);
 }
 
 .prompt-ui__wc {
@@ -1483,28 +1755,35 @@
 
 .prompt-ui__presets {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .prompt-ui__chip {
-  padding: 6px 12px;
+  padding: 8px 12px;
   font-family: 'Press Start 2P', monospace;
   font-size: 8px;
-  color: #00ff41;
-  background: rgba(0, 255, 65, 0.08);
-  border: 1px solid rgba(0, 255, 65, 0.2);
-  border-radius: 20px;
+  color: #52ff51;
+  background: transparent;
+  border: 1px solid rgba(82, 255, 81, 0.4);
+  border-radius: 999px;
   cursor: pointer;
   transition: all 0.15s ease;
-  text-shadow: 0 0 4px rgba(0, 255, 65, 0.3);
+  text-shadow: 0 0 4px rgba(82, 255, 81, 0.3);
   white-space: nowrap;
 }
 
 .prompt-ui__chip:hover {
-  background: rgba(0, 255, 65, 0.15);
-  border-color: rgba(0, 255, 65, 0.5);
-  box-shadow: 0 0 10px rgba(0, 255, 65, 0.2);
+  background: rgba(82, 255, 81, 0.1);
+  border-color: rgba(82, 255, 81, 0.6);
+  box-shadow: 0 0 10px rgba(82, 255, 81, 0.15);
+}
+
+.prompt-ui__chip--active {
+  background: rgba(82, 255, 81, 0.15);
+  border-color: #52ff51;
+  box-shadow: 0 0 12px rgba(82, 255, 81, 0.2);
 }
 
 /* Error input border flash */
@@ -1539,8 +1818,8 @@
   color: rgba(255, 255, 255, 0.3);
   line-height: 1.7;
   letter-spacing: 0.3px;
-  text-align: center;
-  padding-top: 2px;
+  text-align: left;
+  margin-top: 10px;
 }
 
 

@@ -48,6 +48,9 @@ export function AuraLabModal({
           onAuraEquipped?.(data.payload.auraConfig, data.payload.auraParams ?? null);
           onClose();
           break;
+        case 'aura:save':
+          onAuraEquipped?.(data.payload.auraConfig, data.payload.auraParams ?? null);
+          break;
         case 'aura:retry':
           break;
         case 'aura:spend-coins': {
